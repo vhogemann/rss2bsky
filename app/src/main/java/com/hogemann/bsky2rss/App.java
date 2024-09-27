@@ -8,43 +8,54 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
 import com.hogemann.bsky2rss.bsky.BlueSkyService;
+import com.hogemann.bsky2rss.rss.FeedItem;
+import com.hogemann.bsky2rss.rss.RssService;
+import com.hogemann.bsky2rss.rss.YouTubeFeedExtractor;
 import okhttp3.OkHttpClient;
 
 import java.time.Instant;
+import java.util.List;
 
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
-    }
-
     public static void main(String[] args) {
-
-
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         final JavaTimeModule javaTimeModule = new JavaTimeModule();
         javaTimeModule.addDeserializer(Instant.class, InstantDeserializer.INSTANT);
         mapper.registerModule(javaTimeModule);
 
+        RssService rssService = new RssService(new OkHttpClient());
+        Result<List<FeedItem>, Exception> feed =
+                rssService.fetch(
+                        "https://www.youtube.com/feeds/videos.xml?playlist_id=FL3mr_dFDzAFUGt_MS4Hk0OQ",
+                        YouTubeFeedExtractor::extract);
+
         // Read from environment variables
         final String identity = System.getenv("BSKY_IDENTITY");
         final String password = System.getenv("BSKY_PASSWORD");
 
-        BlueSkyService service = new BlueSkyService(
+        BlueSkyService blueSkyService = new BlueSkyService(
                 "https://bsky.social/xrpc",
                 new OkHttpClient(),
                 mapper
         );
-        service.login(identity, password)
-                .flatMap(auth -> service.createPostWithLinkCard(
-                        auth.accessJwt(),
-                        auth.did(),
-                        "Wonder how my code handles YouTube card embeds...",
-                        "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                ))
-                .ifOkOrElse(
-                        result -> System.out.println("Ok: " + result),
-                        error -> System.err.println("Error: " + error)
-                );
+        blueSkyService
+            .login(identity, password)
+            .ifOkOrElse(
+                auth -> {
+                    feed.ifOk(items -> {
+                        items.forEach(item -> {
+                            blueSkyService.createPostWithLinkCard(
+                                auth.accessJwt(),
+                                auth.did(),
+                                item.title(),
+                                item.link()
+                            )
+                            .ifOk(post -> System.out.println("Post created: " + post.validationStatus()));
+                        });
+                    });
+                },
+                error -> System.err.println("Error: " + error)
+            );
     }
 }
