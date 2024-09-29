@@ -1,6 +1,7 @@
-package com.hogemann.bsky2rss;
+package com.hogemann.bsky2rss.bsky;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hogemann.bsky2rss.Result;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 

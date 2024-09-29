@@ -29,6 +29,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0'
     implementation 'com.rometools:rome:2.1.0'
     implementation 'org.jsoup:jsoup:1.18.1'
+
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

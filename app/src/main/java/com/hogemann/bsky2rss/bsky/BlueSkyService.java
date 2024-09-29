@@ -2,7 +2,6 @@ package com.hogemann.bsky2rss.bsky;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hogemann.bsky2rss.HttpUtil;
 import com.hogemann.bsky2rss.Result;
 import com.hogemann.bsky2rss.bsky.model.*;
 import com.hogemann.bsky2rss.bsky.model.blob.UploadBlobResponse;

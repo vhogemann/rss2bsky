@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Post.class, name = "app.bsky.feed.post"),
-        @JsonSubTypes.Type(value = Repost.class, name = "app.bsky.feed.repost"),
+        @JsonSubTypes.Type(value = Repost.class, name = "app.bsky.feed.reposrepostt"),
         @JsonSubTypes.Type(value = Like.class, name = "app.bsky.feed.like")
 })
 public interface Record { }
