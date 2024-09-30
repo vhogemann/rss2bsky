@@ -1,0 +1,77 @@
+package com.hogemann.bsky2rss.bot.persistence;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hogemann.bsky2rss.bot.model.PublishedItem;
+import com.hogemann.bsky2rss.bot.model.Source;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+
+public class JsonFileRepository implements Rss2BskyRepository {
+
+    private final static Logger LOGGER = Logger.getLogger(JsonFileRepository.class.getName());
+    private final static String SOURCES_FILE = "sources.json";
+    private final ObjectMapper mapper;
+    private final String path;
+
+    public JsonFileRepository(ObjectMapper mapper, String path) {
+        this.mapper = mapper;
+        this.path = path;
+    }
+
+    @Override
+    public List<Source> listSources() {
+        final String fileName = path + "/" + SOURCES_FILE;
+        final File file = new File(fileName);
+        if(file.exists() && file.isFile()) {
+            try {
+                return mapper.readValue(file, mapper.getTypeFactory().constructCollectionType(List.class, Source.class));
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Error reading file " + fileName, e);
+            }
+        }
+        return List.of();
+    }
+
+    @Override
+    public List<PublishedItem> lastPublishedItem(UUID sourceId) {
+        final String fileName = path + "/" + sourceId + ".json";
+        final File file = new File(fileName);
+        if(file.exists() && file.isFile()) {
+            try (Stream<String> lines = Files.lines(Paths.get(fileName))) {
+                return lines
+                        .map(this::parsePublishedItem)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList();
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Error reading file " + fileName, e);
+            }
+        }
+        return List.of();
+    }
+
+    private Optional<PublishedItem> parsePublishedItem(String json) {
+        // TODO
+        return Optional.empty();
+    }
+
+    @Override
+    public void savePublishedItem(UUID sourceId, PublishedItem item) {
+        final String fileName = path + "/" + sourceId + ".json";
+        try {
+            // Append to file
+            Files.writeString(Paths.get(fileName), mapper.writeValueAsString(item) + "\n");
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error writing file " + fileName, e);
+        }
+    }
+}
