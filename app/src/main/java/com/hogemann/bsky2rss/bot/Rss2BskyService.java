@@ -1,5 +1,7 @@
 package com.hogemann.bsky2rss.bot;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hogemann.bsky2rss.bot.model.PublishedItem;
 import com.hogemann.bsky2rss.bot.model.Source;
 import com.hogemann.bsky2rss.bot.persistence.Rss2BskyRepository;
@@ -13,6 +15,7 @@ import java.util.logging.Logger;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 
+@Singleton
 public class Rss2BskyService {
 
     private static final Logger LOG = Logger.getLogger(Rss2BskyService.class.getName());
@@ -21,6 +24,7 @@ public class Rss2BskyService {
     private final BlueSkyService blueSkyService;
     private final Rss2BskyRepository repository;
 
+    @Inject
     public Rss2BskyService(RssService rssService, BlueSkyService blueSkyService, Rss2BskyRepository repository) {
         this.rssService = rssService;
         this.blueSkyService = blueSkyService;

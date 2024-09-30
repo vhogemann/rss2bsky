@@ -1,5 +1,7 @@
 package com.hogemann.bsky2rss.rss;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hogemann.bsky2rss.Result;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
@@ -14,10 +16,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 
+@Singleton
 public class RssService {
 
     private final OkHttpClient client;
 
+    @Inject
     public RssService(OkHttpClient client) {
         this.client = client;
     }

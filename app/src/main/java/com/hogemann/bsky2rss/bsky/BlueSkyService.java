@@ -2,6 +2,8 @@ package com.hogemann.bsky2rss.bsky;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hogemann.bsky2rss.Result;
 import com.hogemann.bsky2rss.bsky.model.*;
 import com.hogemann.bsky2rss.bsky.model.blob.UploadBlobResponse;
@@ -14,11 +16,13 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 
+@Singleton
 public class BlueSkyService {
     private final String baseUrl;
     private final OkHttpClient client;
     private final ObjectMapper mapper;
 
+    @Inject
     public BlueSkyService(String baseUrl, OkHttpClient client, ObjectMapper mapper) {
         this.baseUrl = baseUrl;
         this.client = client;
