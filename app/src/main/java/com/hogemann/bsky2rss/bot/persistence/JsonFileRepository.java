@@ -1,10 +1,10 @@
 package com.hogemann.bsky2rss.bot.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.hogemann.bsky2rss.bot.model.PublishedItem;
 import com.hogemann.bsky2rss.bot.model.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,26 +12,20 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
 import java.util.stream.Stream;
 
-@Singleton
 public class JsonFileRepository implements Rss2BskyRepository {
 
-    private final static Logger LOGGER = Logger.getLogger(JsonFileRepository.class.getName());
-    private final static String SOURCES_FILE = "sources.json";
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonFileRepository.class);
+    private final static String SOURCES_FILE = "source.json";
     private final ObjectMapper mapper;
     private final String path;
 
-    @Inject
-    public JsonFileRepository(ObjectMapper mapper, String path) {
+    public JsonFileRepository(
+            ObjectMapper mapper,
+            String path) {
         this.mapper = mapper;
         this.path = path;
     }
@@ -40,11 +34,11 @@ public class JsonFileRepository implements Rss2BskyRepository {
     public List<Source> listSources() {
         final String fileName = path + "/" + SOURCES_FILE;
         final File file = new File(fileName);
-        if(file.exists() && file.isFile()) {
+        if (file.exists() && file.isFile()) {
             try {
                 return mapper.readValue(file, mapper.getTypeFactory().constructCollectionType(List.class, Source.class));
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error reading file " + fileName, e);
+                LOGGER.error("Error reading file {}", fileName, e);
             }
         }
         return List.of();
@@ -66,9 +60,9 @@ public class JsonFileRepository implements Rss2BskyRepository {
 
     @Override
     public List<PublishedItem> lastPublishedItem(UUID sourceId) {
-        final String fileName = path + "/" + sourceId + ".json";
+        final String fileName = path + "/" + sourceId + ".ndjson";
         final File file = new File(fileName);
-        if(file.exists() && file.isFile()) {
+        if (file.exists() && file.isFile()) {
             try {
                 return getLastLines(100, fileName)
                         .map(this::parsePublishedItem)
@@ -76,7 +70,7 @@ public class JsonFileRepository implements Rss2BskyRepository {
                         .map(Optional::get)
                         .toList();
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error reading file " + fileName, e);
+                LOGGER.error("Error reading file {}", fileName, e);
             }
         }
         return List.of();
@@ -86,18 +80,22 @@ public class JsonFileRepository implements Rss2BskyRepository {
         try {
             return Optional.of(mapper.readValue(json, PublishedItem.class));
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error parsing json " + json, e);
+            LOGGER.error("Error parsing json {}", json, e);
         }
         return Optional.empty();
     }
 
     @Override
     public void savePublishedItem(UUID sourceId, PublishedItem item) {
-        final String fileName = path + "/" + sourceId + ".json";
+        final String fileName = path + "/" + sourceId + ".ndjson";
         try {
-            Files.writeString(Paths.get(fileName), mapper.writeValueAsString(item) + "\n");
+            Files.writeString(
+                    Paths.get(fileName),
+                    mapper.writeValueAsString(item) + "\n",
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND);
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error writing file " + fileName, e);
+            LOGGER.error("Error writing file {}", fileName, e);
         }
     }
 }

@@ -1,30 +1,24 @@
 package com.hogemann.bsky2rss.bot;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.hogemann.bsky2rss.bot.model.PublishedItem;
 import com.hogemann.bsky2rss.bot.model.Source;
 import com.hogemann.bsky2rss.bot.persistence.Rss2BskyRepository;
 import com.hogemann.bsky2rss.bsky.BlueSkyService;
 import com.hogemann.bsky2rss.rss.FeedItem;
 import com.hogemann.bsky2rss.rss.RssService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.logging.Logger;
 
-import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.SEVERE;
-
-@Singleton
 public class Rss2BskyService {
 
-    private static final Logger LOG = Logger.getLogger(Rss2BskyService.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Rss2BskyService.class);
 
     private final RssService rssService;
     private final BlueSkyService blueSkyService;
     private final Rss2BskyRepository repository;
 
-    @Inject
     public Rss2BskyService(RssService rssService, BlueSkyService blueSkyService, Rss2BskyRepository repository) {
         this.rssService = rssService;
         this.blueSkyService = blueSkyService;
@@ -52,13 +46,13 @@ public class Rss2BskyService {
                                     .toList();
                             publish(source, items);
                         },
-                        error -> LOG.log(SEVERE, "Failed to fetch feed", error)
+                        error -> LOGGER.error("Failed to fetch feed", error)
                 );
     }
 
     private void publish(Source source, List<FeedItem> items) {
         if (items.isEmpty()) {
-            LOG.log(INFO, "No new items to publish for source {0}", source.name());
+            LOGGER.info("No new items to publish for source {}", source.feedId());
             return;
         }
         blueSkyService.login(source.bskyIdentity(), source.bskyPassword())
@@ -66,17 +60,17 @@ public class Rss2BskyService {
                         auth ->
                             items.forEach(item ->
                                 blueSkyService.createPostWithLinkCard(
-                                        source.bskyIdentity(),
-                                        source.bskyPassword(),
+                                        auth.accessJwt(),
+                                        auth.did(),
                                         item.title(),
                                         item.link())
                                     .ifOkOrElse(
                                             response -> savePublishedItem(source, item),
-                                            error -> LOG.log(SEVERE, "Failed to create post", error)
+                                            error -> LOGGER.error("Failed to publish item: ", error)
                                     )
                             )
                         ,
-                        error -> LOG.log(SEVERE,"Failed to login to BlueSky", error)
+                        error -> LOGGER.error("Failed to login to BlueSky: ", error)
                 );
     }
 

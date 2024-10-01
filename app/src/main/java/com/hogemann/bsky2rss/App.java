@@ -5,57 +5,52 @@ package com.hogemann.bsky2rss;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
+import com.hogemann.bsky2rss.bot.Rss2BskyService;
+import com.hogemann.bsky2rss.bot.persistence.JsonFileRepository;
 import com.hogemann.bsky2rss.bsky.BlueSkyService;
-import com.hogemann.bsky2rss.rss.FeedItem;
 import com.hogemann.bsky2rss.rss.RssService;
-import com.hogemann.bsky2rss.rss.YouTubeFeedExtractor;
 import okhttp3.OkHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.List;
 
 public class App {
+
+    private static final Logger LOG = LoggerFactory.getLogger(App.class);
+
+    private static final String BASE_API = "https://bsky.social/xrpc";
+
     public static void main(String[] args) {
-        final ObjectMapper mapper = new ObjectMapper();
+        try {
+            rss2BskyService().run();
+        } catch (Exception e) {
+            LOG.error("Error running service", e);
+        }
+    }
+
+    private static Rss2BskyService rss2BskyService() {
+        final String jsonPath = System.getenv("JSON_PATH");
+        final OkHttpClient client = new OkHttpClient();
+        final ObjectMapper mapper = new JsonMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         final JavaTimeModule javaTimeModule = new JavaTimeModule();
         javaTimeModule.addDeserializer(Instant.class, InstantDeserializer.INSTANT);
         mapper.registerModule(javaTimeModule);
-
-        RssService rssService = new RssService(new OkHttpClient());
-        Result<List<FeedItem>, Exception> feed =
-                rssService.fetch(
-                        "https://www.youtube.com/feeds/videos.xml?playlist_id=FL3mr_dFDzAFUGt_MS4Hk0OQ",
-                        YouTubeFeedExtractor::extract);
-
-        // Read from environment variables
-        final String identity = System.getenv("BSKY_IDENTITY");
-        final String password = System.getenv("BSKY_PASSWORD");
-
-        BlueSkyService blueSkyService = new BlueSkyService(
-                "https://bsky.social/xrpc",
-                new OkHttpClient(),
-                mapper
+        return new Rss2BskyService(
+                new RssService(client),
+                new BlueSkyService(
+                        BASE_API,
+                        client,
+                        mapper),
+                new JsonFileRepository(
+                        mapper,
+                        jsonPath
+                )
         );
-        blueSkyService
-            .login(identity, password)
-            .ifOkOrElse(
-                auth -> {
-                    feed.ifOk(items -> {
-                        items.forEach(item -> {
-                            blueSkyService.createPostWithLinkCard(
-                                auth.accessJwt(),
-                                auth.did(),
-                                item.title(),
-                                item.link()
-                            )
-                            .ifOk(post -> System.out.println("Post created: " + post.validationStatus()));
-                        });
-                    });
-                },
-                error -> System.err.println("Error: " + error)
-            );
     }
+
 }

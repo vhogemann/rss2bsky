@@ -1,7 +1,5 @@
 package com.hogemann.bsky2rss.rss;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.hogemann.bsky2rss.Result;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
@@ -16,17 +14,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 
-@Singleton
 public class RssService {
 
     private final OkHttpClient client;
 
-    @Inject
     public RssService(OkHttpClient client) {
         this.client = client;
     }
 
-    public Result<List<FeedItem>, Exception> fetch(String url, Function<SyndEntry, FeedItem> extractor) {
+    public Result<List<FeedItem>> fetch(String url, Function<SyndEntry, FeedItem> extractor) {
         return fetchFeed(url)
                 .flatMap(rss -> {
                     try {
@@ -39,7 +35,7 @@ public class RssService {
                 });
     }
 
-    private Result<String, Exception> fetchFeed(String url) {
+    private Result<String> fetchFeed(String url) {
         final Request request = new Request.Builder().url(url).get().build();
         try(var result = client.newCall(request).execute()) {
             if(result.isSuccessful() && result.body() != null) {

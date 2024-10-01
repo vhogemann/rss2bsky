@@ -29,7 +29,10 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0'
     implementation 'com.rometools:rome:2.1.0'
     implementation 'org.jsoup:jsoup:1.18.1'
-    implementation 'com.google.inject:guice:5.1.0'
+
+    // Logging dependencies
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
 
 }
 
@@ -42,7 +45,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'org.example.App'
+    mainClass = 'com.hogemann.bsky2rss.App'
 }
 
 tasks.named('test') {
