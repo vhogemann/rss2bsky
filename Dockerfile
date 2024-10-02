@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21 AS BUILD_IMAGE
+FROM eclipse-temurin:21 AS build_image
 ENV APP_HOME=/root/dev/
 RUN mkdir -p $APP_HOME/src/main/java
 WORKDIR $APP_HOME
@@ -11,5 +11,13 @@ RUN ./gradlew build
 
 FROM eclipse-temurin:21-jre
 WORKDIR /root/
-COPY --from=BUILD_IMAGE /root/dev/app/build/libs/app.jar .
+COPY --from=build_image /root/dev/app/build/libs/app.jar .
+RUN mkdir -p /root/dev/json
+
+# Set environment variables
+ENV JSON_PATH=/root/dev/json
+
+# Use this to have access to the json files
+VOLUME /root/dev/json
+
 CMD ["java","-jar","app.jar"]

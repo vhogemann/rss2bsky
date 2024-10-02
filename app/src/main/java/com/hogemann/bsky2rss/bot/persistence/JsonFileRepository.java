@@ -59,7 +59,7 @@ public class JsonFileRepository implements Rss2BskyRepository {
     }
 
     @Override
-    public List<PublishedItem> lastPublishedItem(UUID sourceId) {
+    public List<PublishedItem> lastPublishedItem(String sourceId) {
         final String fileName = path + "/" + sourceId + ".ndjson";
         final File file = new File(fileName);
         if (file.exists() && file.isFile()) {
@@ -86,7 +86,7 @@ public class JsonFileRepository implements Rss2BskyRepository {
     }
 
     @Override
-    public void savePublishedItem(UUID sourceId, PublishedItem item) {
+    public void savePublishedItem(String sourceId, PublishedItem item) {
         final String fileName = path + "/" + sourceId + ".ndjson";
         try {
             Files.writeString(

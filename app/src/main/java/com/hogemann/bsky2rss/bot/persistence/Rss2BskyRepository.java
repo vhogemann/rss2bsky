@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public interface Rss2BskyRepository {
     List<Source> listSources();
-    List<PublishedItem> lastPublishedItem(UUID sourceId);
-    void savePublishedItem(UUID sourceId, PublishedItem item);
+    List<PublishedItem> lastPublishedItem(String sourceId);
+    void savePublishedItem(String sourceId, PublishedItem item);
 }
