@@ -65,10 +65,18 @@ class JsonFileRepositoryTest {
 
     @Test
     void getLastLines() {
+        final PublishedItem item = new PublishedItem("test_feed","https://example.com/item", "Example Item");
+        repository.savePublishedItem("test_feed", item);
+        final List<PublishedItem> items = repository.lastPublishedItem("test_feed");
+        assertEquals(item, items.getFirst());
     }
 
     @Test
     void lastPublishedItem() {
+        final PublishedItem item = new PublishedItem("test_feed","https://example.com/item", "Example Item");
+        repository.savePublishedItem("test_feed", item);
+        final List<PublishedItem> items = repository.lastPublishedItem("test_feed");
+        assertEquals(item, items.getFirst());
     }
 
     @Test

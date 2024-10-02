@@ -32,6 +32,7 @@ public class Rss2BskyService {
     }
 
     private void publish(Source source) {
+        LOGGER.info("Fetching feed for source {}", source.name());
         final List<String> lastPublished =
                 repository
                         .lastPublishedItem(source.feedId()).stream()
@@ -55,6 +56,7 @@ public class Rss2BskyService {
             LOGGER.info("No new items to publish for source {}", source.feedId());
             return;
         }
+        LOGGER.info("Publishing {} new items for source {}", items.size(), source.feedId());
         blueSkyService.login(source.bskyIdentity(), source.bskyPassword())
                 .ifOkOrElse(
                         auth ->
