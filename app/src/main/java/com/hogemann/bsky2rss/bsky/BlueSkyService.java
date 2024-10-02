@@ -6,6 +6,7 @@ import com.hogemann.bsky2rss.Result;
 import com.hogemann.bsky2rss.bsky.model.AuthRequest;
 import com.hogemann.bsky2rss.bsky.model.AuthResponse;
 import com.hogemann.bsky2rss.bsky.model.CreateRecordResponse;
+import com.hogemann.bsky2rss.bsky.model.RequestError;
 import com.hogemann.bsky2rss.bsky.model.blob.UploadBlobResponse;
 import com.hogemann.bsky2rss.bsky.model.embed.External;
 import com.hogemann.bsky2rss.bsky.model.record.CreateRecordRequest;
@@ -30,7 +31,7 @@ public class BlueSkyService {
     public Result<AuthResponse> login(String identity, String password) {
         AuthRequest authRequest = new AuthRequest(identity, password);
         try {
-            return HttpUtil.execute(
+            return execute(
                     client,
                     new Request.Builder()
                             .url(baseUrl + "/com.atproto.server.createSession")
@@ -46,7 +47,7 @@ public class BlueSkyService {
     public Result<CreateRecordResponse> createRecord(String token, CreateRecordRequest request) {
         try {
             String json = mapper.writeValueAsString(request);
-            return HttpUtil.execute(
+            return execute(
                     client,
                     new Request.Builder()
                             .url(baseUrl + "/com.atproto.repo.createRecord")
@@ -62,7 +63,7 @@ public class BlueSkyService {
     }
 
     public Result<UploadBlobResponse> uploadBlob(String token, byte[] blob) {
-        return HttpUtil.execute(
+        return execute(
                 client,
                 new Request.Builder()
                         .url(baseUrl + "/com.atproto.repo.uploadBlob")
@@ -147,6 +148,27 @@ public class BlueSkyService {
         } catch (IOException e) {
             return Result.error(e);
         }
+    }
+
+    private static <T> Result<T> execute(
+            OkHttpClient client,
+            Request request,
+            ObjectMapper mapper,
+            Class<T> clazz) {
+        try(var response = client.newCall(request).execute()) {
+            if(response.isSuccessful() && response.body() != null) {
+                var body = response.body().string();
+                var result = mapper.readValue(body, clazz);
+                return Result.ok(result);
+            } else if (response.body() != null) {
+                var body = response.body().string();
+                var error = mapper.readValue(body, RequestError.class);
+                return Result.error(new BlueSkyException(error));
+            }
+        } catch (IOException e) {
+            return Result.error(e);
+        }
+        return Result.empty();
     }
 
     private record CardInfo(String title, String description, String thumb) { }
