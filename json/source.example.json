@@ -1,0 +1,10 @@
+[
+  {
+    "feedId": "example_feed",
+    "name": "Example Feed",
+    "rssUrl": "https://www.youtube.com/feeds/videos.xml?playlist_id=PLAYLIST_ID",
+    "feedExtractor": "YOUTUBE",
+    "bskyIdentity": "example.identity.com",
+    "bskyPassword": "example-app-password"
+  }
+]
