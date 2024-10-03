@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hogemann.bsky2rss.Result;
 import com.hogemann.bsky2rss.bsky.model.AuthRequest;
 import com.hogemann.bsky2rss.bsky.model.AuthResponse;
-import com.hogemann.bsky2rss.bsky.model.CreateRecordResponse;
+import com.hogemann.bsky2rss.bsky.model.record.CreateRecordResponse;
 import com.hogemann.bsky2rss.bsky.model.RequestError;
 import com.hogemann.bsky2rss.bsky.model.blob.UploadBlobResponse;
 import com.hogemann.bsky2rss.bsky.model.embed.External;
