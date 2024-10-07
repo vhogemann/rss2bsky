@@ -8,9 +8,11 @@ import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.function.Function;
 
@@ -27,12 +29,37 @@ public class RssService {
                 .flatMap(rss -> {
                     try {
                         final SyndFeed feed = new SyndFeedInput().build(new XmlReader(new ByteArrayInputStream(rss.getBytes())));
-                        final List<FeedItem> items = feed.getEntries().stream().map(extractor).toList();
+                        final List<FeedItem> items =
+                                feed.getEntries().stream()
+                                        .map(extractor)
+                                        .map(item ->
+                                                new FeedItem(
+                                                        item.title(),
+                                                        item.description(),
+                                                        toAbsoluteUrl(url,item.link())
+                                                )
+                                        )
+                                        .toList();
                         return Result.ok(items);
                     } catch (FeedException | IOException e) {
                         return Result.error(e);
                     }
                 });
+    }
+
+    private String toAbsoluteUrl(@NonNull  String feedUrl, @NonNull String itemUrl) {
+        if(itemUrl.contains("://")) {
+            return itemUrl;
+        }
+        final URI feedUri = URI.create(feedUrl);
+        return
+                feedUri.getScheme() +
+                "://" +
+                feedUri.getHost() +
+                (feedUri.getPort() > 0 ? ":" + feedUri.getPort() : "") +
+                (itemUrl.startsWith("/")
+                        ? itemUrl
+                        : "/" + itemUrl);
     }
 
     private Result<String> fetchFeed(String url) {

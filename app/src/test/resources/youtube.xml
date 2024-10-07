@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?playlist_id=PLAL-dC6xUrO79IQOrdIpFvUgoCjY0hPFp"/>
+ <id>yt:playlist:PLAL-dC6xUrO79IQOrdIpFvUgoCjY0hPFp</id>
+ <yt:playlistId>PLAL-dC6xUrO79IQOrdIpFvUgoCjY0hPFp</yt:playlistId>
+ <yt:channelId>UC3mr_dFDzAFUGt_MS4Hk0OQ</yt:channelId>
+ <title>BlueSky</title>
+ <author>
+  <name>Victor Hogemann</name>
+  <uri>https://www.youtube.com/channel/UC3mr_dFDzAFUGt_MS4Hk0OQ</uri>
+ </author>
+ <published>2024-10-01T10:17:07+00:00</published>
+ <entry>
+  <id>yt:video:w5ebcowAJD8</id>
+  <yt:videoId>w5ebcowAJD8</yt:videoId>
+  <yt:channelId>UCHnyfMqiRRG1u-2MsSQLbXA</yt:channelId>
+  <title>How do QR codes work? (I built one myself to find out)</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=w5ebcowAJD8"/>
+  <author>
+   <name>Veritasium</name>
+   <uri>https://www.youtube.com/channel/UCHnyfMqiRRG1u-2MsSQLbXA</uri>
+  </author>
+  <published>2024-09-30T18:51:21+00:00</published>
+  <updated>2024-10-05T23:09:51+00:00</updated>
+  <media:group>
+   <media:title>How do QR codes work? (I built one myself to find out)</media:title>
+   <media:content url="https://www.youtube.com/v/w5ebcowAJD8?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i4.ytimg.com/vi/w5ebcowAJD8/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Video Description</media:description>
+   <media:community>
+    <media:starRating count="191202" average="5.00" min="1" max="5"/>
+    <media:statistics views="4867747"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:UE-k4hYHIDE</id>
+  <yt:videoId>UE-k4hYHIDE</yt:videoId>
+  <yt:channelId>UCXnNibvR_YIdyPs8PZIBoEw</yt:channelId>
+  <title>The Agony And Ecstasy Of The BP6</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=UE-k4hYHIDE"/>
+  <author>
+   <name>Cathode Ray Dude - CRD</name>
+   <uri>https://www.youtube.com/channel/UCXnNibvR_YIdyPs8PZIBoEw</uri>
+  </author>
+  <published>2024-09-30T15:52:53+00:00</published>
+  <updated>2024-10-03T11:14:08+00:00</updated>
+  <media:group>
+   <media:title>The Agony And Ecstasy Of The BP6</media:title>
+   <media:content url="https://www.youtube.com/v/UE-k4hYHIDE?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/UE-k4hYHIDE/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Concluding a 25-year-long fascination by... not coming to a conclusion. Yeah, that sounds about right for me.
+
+Support me on Patreon: https://www.patreon.com/cathoderaydude
+Tip me: https://ko-fi.com/cathoderaydude
+
+Chapters:
+00:00:00 Intro
+00:02:07 Early days of multiprocessing
+00:05:53 The legend of the BP6
+00:09:12 Dual-socket misconceptions
+00:16:57 BP6 build
+00:22:39 First boot, BIOS, overcloking
+00:25:34 The OS Issue
+00:28:25 Meeting NT 4
+00:31:50 NT Problems
+00:33:45 SMP pros and cons
+00:41:44 Benchmarks
+00:49:40 Multiprocessor gaming
+00:52:45 The tragedy (and saving grace) of early SMP
+00:55:13 The mystery of the BP6
+00:59:38 The mystery resolved... sort of.
+01:00:40 Foreshadowing part 2
+01:02:04 Outro</media:description>
+   <media:community>
+    <media:starRating count="5497" average="5.00" min="1" max="5"/>
+    <media:statistics views="63467"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:XMjLwmgipsA</id>
+  <yt:videoId>XMjLwmgipsA</yt:videoId>
+  <yt:channelId>UCzR-rom72PHN9Zg7RML9EbA</yt:channelId>
+  <title>When Earth "Ate" A Planet</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=XMjLwmgipsA"/>
+  <author>
+   <name>PBS Eons</name>
+   <uri>https://www.youtube.com/channel/UCzR-rom72PHN9Zg7RML9EbA</uri>
+  </author>
+  <published>2024-09-25T14:00:33+00:00</published>
+  <updated>2024-09-27T10:37:23+00:00</updated>
+  <media:group>
+   <media:title>When Earth "Ate" A Planet</media:title>
+   <media:content url="https://www.youtube.com/v/XMjLwmgipsA?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/XMjLwmgipsA/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Watch our next episode two weeks early right now on PBS.org! https://to.pbs.org/EonsOnPBS
+Or on the PBS App: https://to.pbs.org/PBSAppEons
+
+Where did our unique moon come from? It turns out that lunar rocks brought back by Apollo astronauts are a clue, pointing to the origin of our closest cosmic companion, an origin even stranger than you might imagine… 
+
+Find out more about our Prehistoric Elephants here: https://complexly.info/mammoths
+*****
+PBS Member Stations rely on viewers like you. To support your local station, go to http://to.pbs.org/DonateEons
+*****
+
+Eons is a production of Complexly for PBS Digital Studios.
+
+Super special thanks to the following Patreon patrons for helping make Eons possible:
+Randall George, Morgan, Kevin Lacson, Marco Narajos, Collin Dutrow, Pope John XII, Aaditya Mehta, AllPizzasArePersonal, John H. Austin, Jr., Alex Hackman, Stephen Patterson, Odditeas , Karen Farrell, Jason Rostoker, Jonathan Rust, Mary Tevington, Bart &amp; Elke van Iersel - De Jong, Irene Wood, Derek Helling, Mark Talbott-Williams, Nomi Alchin, Duane Westhoff, Hillary Ryde-Collins, Yu Mei, Albert Folsom, Heathe Kyle Yeakley, Dan Caffee, Nick Ryhajlo, Jeff Graham
+
+If you'd like to support the channel, head over to http://patreon.com/eons and pledge for some cool rewards!
+
+Want to follow Eons elsewhere on the internet?
+Facebook - https://www.facebook.com/eonsshow
+Twitter - https://twitter.com/eonsshow
+Instagram - https://www.instagram.com/eonsshow/
+#Eons
+
+References:
+https://docs.google.com/document/d/1j53WM8QcAWzfO9vk6Brv6nbl_vmJIXfYxyxUhVGX9Is/edit?usp=sharing</media:description>
+   <media:community>
+    <media:starRating count="15475" average="5.00" min="1" max="5"/>
+    <media:statistics views="266856"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:9vZQj86SfkQ</id>
+  <yt:videoId>9vZQj86SfkQ</yt:videoId>
+  <yt:channelId>UCSpFnDQr88xCZ80N-X7t0nQ</yt:channelId>
+  <title>Movie Guns Suck, so I Built Something Better</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=9vZQj86SfkQ"/>
+  <author>
+   <name>Corridor Crew</name>
+   <uri>https://www.youtube.com/channel/UCSpFnDQr88xCZ80N-X7t0nQ</uri>
+  </author>
+  <published>2024-09-29T16:00:07+00:00</published>
+  <updated>2024-10-06T18:38:31+00:00</updated>
+  <media:group>
+   <media:title>Movie Guns Suck, so I Built Something Better</media:title>
+   <media:content url="https://www.youtube.com/v/9vZQj86SfkQ?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/9vZQj86SfkQ/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Get a Limited Edition Simpsons Shirt ONLY from September 27th-October 7th ► https://www.bunkerbranding.com/products/the-corridor-crew-t-shirt 
+
+Our videos are made possible by Members of CorridorDigital, our Exclusive Streaming Service! Try a membership yourself with a 14-Day Free Trial ► http://corridordigital.com/
+
+Niko sets out to solve a problem he's been battling his entire career: light for fake muzzle flashes.
+
+Instagram ► http://instagram.com/corridordigital
+Merch ► https://corridordigital.store/
+
+Creative Tools ►
+Puget Computers: https://bit.ly/Puget_Systems
+Aputure Lights: https://bit.ly/Corridor_Lights
+B&amp;H Photo: https://bhpho.to/3r0wEnt
+ActionVFX: https://bit.ly/TheBest_ActionVFX
+Cinema4D: http://bit.ly/Try_Cinema4D
+KitBash 3D: https://KitBash3D.com/?ref=corridorcrew
+Houdini: https://bit.ly/HoudiniSims
+Nuke: https://bit.ly/Nuke_Compositing
+BorisFX: https://bit.ly/BorisFXsuite
+Octane Render: http://bit.ly/Octane_Wrender
+Epidemic Music: http://bit.ly/Corridor_Music
+
+Chapters ►
+0:00 A Real Muzzle Flash
+0:55 A Chronicling of our Rise to Power
+1:56 The Plan
+3:00 The Build
+7:58 The Shoot
+11:18 The Reveal</media:description>
+   <media:community>
+    <media:starRating count="61434" average="5.00" min="1" max="5"/>
+    <media:statistics views="1211766"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:yXzoZ2AfWwg</id>
+  <yt:videoId>yXzoZ2AfWwg</yt:videoId>
+  <yt:channelId>UCSvUWS3uBmlgdOriMZDpRmA</yt:channelId>
+  <title>How can the Nintendo 64 run portal?!? | Portal64</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=yXzoZ2AfWwg"/>
+  <author>
+   <name>James Lambert</name>
+   <uri>https://www.youtube.com/channel/UCSvUWS3uBmlgdOriMZDpRmA</uri>
+  </author>
+  <published>2022-07-17T16:00:42+00:00</published>
+  <updated>2024-08-24T19:56:01+00:00</updated>
+  <media:group>
+   <media:title>How can the Nintendo 64 run portal?!? | Portal64</media:title>
+   <media:content url="https://www.youtube.com/v/yXzoZ2AfWwg?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/yXzoZ2AfWwg/hqdefault.jpg" width="480" height="360"/>
+   <media:description>In this video I describe the technique I use to render portals on real Nintendo 64 hardware. I also give a quick update on the progress of the port.
+
+ Latest ROM Download
+https://github.com/lambertjamesd/portal64/releases/tag/v0.5.1
+
+Companion Cube Pendants--melting scrap aluminum to metal casting/sand casting
+https://youtu.be/1F_Sg4_QpUg
+
+N64 Homebrew Resources
+https://discord.gg/WqFgNWf
+https://n64.dev/#community 
+
+If you want to code using the official N64 SDK
+https://crashoveride95.github.io/n64hbrew/modernsdk/index.html
+If you want to use an open source SDK
+https://libdragon.dev/
+
+Not So Superman (cringe warning)
+https://youtu.be/6snlMvCMZjY</media:description>
+   <media:community>
+    <media:starRating count="35227" average="5.00" min="1" max="5"/>
+    <media:statistics views="887806"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:9xIE9seg6Os</id>
+  <yt:videoId>9xIE9seg6Os</yt:videoId>
+  <yt:channelId>UC0woBco6Dgcxt0h8SwyyOmw</yt:channelId>
+  <title>China's Electric Car Industry is Insane</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=9xIE9seg6Os"/>
+  <author>
+   <name>Megaprojects</name>
+   <uri>https://www.youtube.com/channel/UC0woBco6Dgcxt0h8SwyyOmw</uri>
+  </author>
+  <published>2024-09-28T20:00:03+00:00</published>
+  <updated>2024-09-30T13:41:22+00:00</updated>
+  <media:group>
+   <media:title>China's Electric Car Industry is Insane</media:title>
+   <media:content url="https://www.youtube.com/v/9xIE9seg6Os?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/9xIE9seg6Os/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Don't get caught up in biased reporting or one-sided stories. Go to https://ground.news/MegaProjects to get 40% off unlimited access with the Vantage Plan and see every angle for yourself.
+
+Got a beard? Good. I've got something for you: http://beardblaze.com
+
+Simon's Social Media:
+Twitter: https://twitter.com/SimonWhistler
+Instagram: https://www.instagram.com/simonwhistler/
+
+This video is #sponsored by Ground News.
+
+Love content? Check out Simon's other YouTube Channels:
+
+
+Warographics: https://www.youtube.com/channel/UC9h8BDcXwkhZtnqoQJ7PggA
+SideProjects: https://www.youtube.com/channel/UC3Wn3dABlgESm8Bzn8Vamgg
+Into The Shadows: https://www.youtube.com/c/IntotheShadows
+Today I Found Out: https://www.youtube.com/user/TodayIFoundOut
+Highlight History: https://www.youtube.com/channel/UCnb-VTwBHEV3gtiB9di9DZQ
+Brain Blaze: https://www.youtube.com/channel/UCYY5GWf7MHFJ6DZeHreoXgw
+Casual Criminalist: https://www.youtube.com/c/TheCasualCriminalist
+Decoding the Unknown: https://www.youtube.com/channel/UCZdWrz8pF6B5Y_c6Zi6pmdQ
+Places: https://youtube.com/@Places302?si=u5C3dXhcJ4tFuY-4
+Astrographics: https://youtube.com/@Astrographics-ve4yq?si=4J_1EcNWIjXSBFOl</media:description>
+   <media:community>
+    <media:starRating count="10020" average="5.00" min="1" max="5"/>
+    <media:statistics views="292628"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:KBcxuM-qXec</id>
+  <yt:videoId>KBcxuM-qXec</yt:videoId>
+  <yt:channelId>UCUHW94eEFW7hkUMVaZz4eDg</yt:channelId>
+  <title>The Moon's Orbit is WEIRD</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=KBcxuM-qXec"/>
+  <author>
+   <name>minutephysics</name>
+   <uri>https://www.youtube.com/channel/UCUHW94eEFW7hkUMVaZz4eDg</uri>
+  </author>
+  <published>2024-10-02T18:05:35+00:00</published>
+  <updated>2024-10-04T05:08:47+00:00</updated>
+  <media:group>
+   <media:title>The Moon's Orbit is WEIRD</media:title>
+   <media:content url="https://www.youtube.com/v/KBcxuM-qXec?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i4.ytimg.com/vi/KBcxuM-qXec/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Go to https://brilliant.org/MinutePhysics to try Brilliant for 30 days for FREE, and to get 20% off an annual premium subscription to Brilliant.
+
+We think of the moon as orbiting the earth, following a spiraling trajectory as the earth itself orbits the sun. But this is wrong. Not only is the moon's orbit NOT a spiral... there's an argument that the moon actually orbits the sun, not the earth! The moon's trajectory is more like a 12-sided polygon with curved corners than it is a spiral or even a wiggly line.
+
+Support MinutePhysics on Patreon! http://www.patreon.com/minutephysics
+Link to Patreon Supporters: http://www.minutephysics.com/supporters/
+
+MinutePhysics is on twitter - @minutephysics
+And facebook - http://facebook.com/minutephysics
+And Google+ (does anyone use this any more?) - http://bit.ly/qzEwc6
+
+Minute Physics provides an energetic and entertaining view of old and new problems in physics -- all in a minute!
+
+Created by Henry Reich</media:description>
+   <media:community>
+    <media:starRating count="33844" average="5.00" min="1" max="5"/>
+    <media:statistics views="446050"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:1S1fISh-pag</id>
+  <yt:videoId>1S1fISh-pag</yt:videoId>
+  <yt:channelId>UCGys2_WPe-TZ9XLFx99-iuQ</yt:channelId>
+  <title>Write in C</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=1S1fISh-pag"/>
+  <author>
+   <name>Albert Veli</name>
+   <uri>https://www.youtube.com/channel/UCGys2_WPe-TZ9XLFx99-iuQ</uri>
+  </author>
+  <published>2010-01-17T06:44:32+00:00</published>
+  <updated>2024-08-18T02:35:35+00:00</updated>
+  <media:group>
+   <media:title>Write in C</media:title>
+   <media:content url="https://www.youtube.com/v/1S1fISh-pag?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/1S1fISh-pag/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Students at the computer science universities used to sing this song back in the 1990:s. Well, at least I did. Now I sing this song one more time and remember those days. Let it be and always write in C.</media:description>
+   <media:community>
+    <media:starRating count="7694" average="5.00" min="1" max="5"/>
+    <media:statistics views="667320"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>

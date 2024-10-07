@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator>
+    <link href="/feed.xml" rel="self" type="application/atom+xml"/>
+    <link href="/" rel="alternate" type="text/html"/>
+    <updated>2024-10-05T22:17:13+00:00</updated>
+    <id>/feed.xml</id>
+    <title type="html">Victor Högemann</title>
+    <subtitle>Brazilian developer living in Ireland. Grew up in the 80&apos;s programming MSX Basic and watching
+        Thundercats and Dengeki Sentai Changeman on the TV.
+    </subtitle>
+    <entry>
+        <title type="html">Rinha de Backend 2024 - F#</title>
+        <link href="/hacking/fsharp/2024/02/25/rinha-de-backend-2024.html" rel="alternate" type="text/html"
+              title="Rinha de Backend 2024 - F#"/>
+        <published>2024-02-25T00:00:00+00:00</published>
+        <updated>2024-02-25T00:00:00+00:00</updated>
+        <id>/hacking/fsharp/2024/02/25/rinha-de-backend-2024</id>
+        <content type="html" xml:base="/hacking/fsharp/2024/02/25/rinha-de-backend-2024.html"><![CDATA[<p>A <a href="https://github.com/zanfranceschi/rinha-de-backend-2024-q1">Rinha de Backend</a> é um evento organizado pelo <a href="https://linktr.ee/zanfranceschi">Francisco Zanfrancheschi</a>. As regras são simples, você precisa criar uma API rodando em docker compose, seguindo a arquitetura mínima pedida, e que sobreviva a um teste de carga previamente escrito.</p>
+
+<p><img src="/assets/rinha-2024-q1/image.png" alt="alt text" /></p>
+
+<p>Eu novamente estou participando, e novamente estou fazendo em F#. O repositório com o projeto está no GitHub:</p>
+
+<blockquote>
+  <p><a href="https://github.com/vhogemann/rinha-de-backend-2024-fsharp">Rinha de Backend 2024 - FSharp</a></p>
+</blockquote>
+
+<h1 id="crébito">Crébito</h1>
+
+<p>O tema desse ano foi controle de concorrência, criar uma API com dois endpoints:</p>
+
+<ul>
+  <li>Saldo e extrato <code class="language-plaintext highlighter-rouge">GET /clientes/{id}/extrato</code></li>
+  <li>Débito e crédito <code class="language-plaintext highlighter-rouge">POST /clientes/{id}/transacoes</code></li>
+</ul>
+
+<p>Tudo que você tem que fazer é garantir que a sua API, com no mínimo duas instâncias, garanta a consistência das transações sem deixar que o saldo do usuário estoure o limite.</p>
+
+<h2 id="garantindo-a-consistência">Garantindo a consistência</h2>
+
+<p>O maior problema dessa ediçao da Rinha é garantir que as transações sejam consistentes. O esquema mínimo da persistência pede por duas entidades: <code class="language-plaintext highlighter-rouge">Saldo</code> e <code class="language-plaintext highlighter-rouge">Transação</code>.</p>
+
+<p>Saldo é o valor atual da conta do cliente, e transação é a lista de operações de débito e crédito aplicadas a conta.</p>
+
+<p><img src="/assets/rinha-2024-q1/DDL.png" alt="alt text" /></p>
+
+<p>Precisamos garantir duas coisas:</p>
+
+<ul>
+  <li>Que o <code class="language-plaintext highlighter-rouge">saldo - limite</code> nunca seja <strong>negativo</strong></li>
+  <li>Que transações inválidas não sejam salvas na tabela</li>
+</ul>
+
+<p>Tudo isso enquanto garantimos que a performance da API seja a melhor possível.</p>
+
+<p>Escolhi usar <a href="https://www.postgresql.org/">PostgreSQL</a> como banco de dados. O DDL completo está <a href="https://github.com/vhogemann/rinha-de-backend-2024-fsharp/blob/main/src/bootstrap.sql">aqui</a>.</p>
+
+<h3 id="saldo">Saldo</h3>
+
+<p>Eu não sou nenhum mago do SQL, então a estragégia aqui é a mais simples possível. Uma <code class="language-plaintext highlighter-rouge">constraint</code> do tipo <code class="language-plaintext highlighter-rouge">CHECK</code> que garante que o saldo nunca seja negativo.</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- UNLOGGED TABLE é uma tabela que não é escrita no WAL, o que</span>
+<span class="c1">-- significa que não pode participar de transações.</span>
+<span class="k">CREATE</span> <span class="n">UNLOGGED</span> <span class="k">TABLE</span> <span class="n">balance</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="n">client_id</span> <span class="nb">INT</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">amount</span> <span class="nb">INT</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">overdraft_limit</span> <span class="nb">INT</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+<span class="c1">-- Garante que o "saldo - limite" nunca seja negativo</span>
+    <span class="k">CONSTRAINT</span> <span class="n">amount_overdraft_limit_check</span> <span class="k">CHECK</span> <span class="p">(</span><span class="n">amount</span> <span class="o">+</span> <span class="n">overdraft_limit</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="k">CONSTRAINT</span> <span class="n">balance_client_id_id_key</span> <span class="k">UNIQUE</span> <span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="n">id</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">INDEX</span> <span class="n">balance_client_id_idx</span> <span class="k">ON</span> <span class="n">balance</span> <span class="p">(</span><span class="n">client_id</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="transação">Transação</h3>
+
+<p>As duas tabelas que eu tenho, <code class="language-plaintext highlighter-rouge">balance</code> e <code class="language-plaintext highlighter-rouge">transactions</code>, são criadas como <code class="language-plaintext highlighter-rouge">UNLOGGED TABLE</code>. Isso aumenta a performance já que o PostgreSQL não precisa escrever essas tabelas no <code class="language-plaintext highlighter-rouge">WAL</code> (Write Ahead Log), que é um arquivo de log que o PostgreSQL usa pra garantir a consistência dos dados.</p>
+
+<p>A desvantagem é que essas tabelas não podem participar de transações, então pra garantir a integrigade entre as duas a <strong>ordem</strong> das operações é importante.</p>
+
+<p>Outra coisa que ajuda a performance é agrupar as operações de atualizar o saldo e salvar a transação em uma única chamada. Isso também é crítico pra garantir a consistência dos dados.</p>
+
+<p>Pra isso, as duas operações são feitas dentro de uma <code class="language-plaintext highlighter-rouge">STORED PROCEDURE</code> que é chamada pela API:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">PROCEDURE</span> <span class="n">withdrawal</span><span class="p">(</span><span class="n">a_client_id</span> <span class="nb">INT</span><span class="p">,</span> <span class="n">w_amount</span> <span class="nb">INT</span><span class="p">,</span> <span class="n">w_description</span> <span class="nb">TEXT</span><span class="p">)</span> <span class="k">AS</span> <span class="err">$$</span>
+<span class="k">BEGIN</span>
+<span class="c1">-- Se a constraint for violada, a PROC para aqui e o saldo não é</span>
+<span class="c1">-- atualizado, nem a transação é salva</span>
+    <span class="k">UPDATE</span> <span class="n">balance</span>
+    <span class="k">SET</span> <span class="n">amount</span> <span class="o">=</span> <span class="n">amount</span> <span class="o">-</span> <span class="n">w_amount</span>
+    <span class="k">WHERE</span> <span class="n">client_id</span> <span class="o">=</span> <span class="n">a_client_id</span><span class="p">;</span>
+
+    <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">transactions</span> <span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="n">amount</span><span class="p">,</span> <span class="n">transaction_type</span><span class="p">,</span> <span class="n">transaction_date</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+    <span class="k">VALUES</span> <span class="p">(</span><span class="n">a_client_id</span><span class="p">,</span> <span class="n">w_amount</span><span class="p">,</span> <span class="s1">'WITHDRAWAL'</span><span class="p">,</span> <span class="n">NOW</span><span class="p">(),</span> <span class="n">w_description</span><span class="p">);</span>
+<span class="k">END</span><span class="p">;</span>
+<span class="err">$$</span> <span class="k">LANGUAGE</span> <span class="n">plpgsql</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Caso a chamada pra <code class="language-plaintext highlighter-rouge">withdrawal</code> falhe, eu capturo a exceção e retorno <code class="language-plaintext highlighter-rouge">422</code> na API.</p>
+
+<h2 id="minha-implementação-em-f">Minha implementação em F#</h2>
+
+<p>Assim como eu fiz na <a href="https://github.com/vhogemann/rinha-de-backend-2023">minha última participação</a> na <a href="https://github.com/zanfranceschi/rinha-de-backend-2023-q3">Rinha de 2023</a>, escolhi fazer tudo em <a href="https://fsharp.org">F#</a>.</p>
+
+<p>F# é uma linguagem funcional, multi-paradigma, que roda em cima do Dotnet CLR. Ela foi criada por <a href="https://mastodon.sdf.org/@dsyme">Don Syme</a> na Microsoft, e pertence a família <a href="https://en.wikipedia.org/wiki/ML_(programming_language)">ML</a> de linguagens de programação funcionais, assim como o <a href="https://ocaml.org/">OCaml</a>.</p>
+
+<p>Esse artigo tem um bom <a href="https://jkone27-3876.medium.com/comparing-ocaml-to-f-f75e4ab27769">resumo das diferenças entre F# e OCaml</a>.</p>
+
+<p>Um dos méritos do F# é ser bem expressivo, e bastante enxuto, então <a href="https://github.com/vhogemann/rinha-de-backend-2024-fsharp/blob/main/src/Rinha/Program.fs">a implementação da API</a> inteira ficou em menos de 200 linhas de código. O que eu vou fazer aqui nesse aquivo é um code-review de cada módulo como forma de apresentar o F# pra vocês.</p>
+
+<p>Eu vou omitir algums imports pra facitar a leitura, e incluir comentários que não estão no fonte, mas a maior parte do código vai estar aqui.</p>
+
+<h3 id="modelo">Modelo</h3>
+
+<p>Aqui eu defino os DTOs que a aplicação vai usar. Como mais na frente você vai ver que eu estou usando SQL direto, não preciso me preocupar em separar o que vai pra View e o que vai pro Banco.</p>
+
+<p>Uma coisa que vale a pena explicar aqui sobre F# é que ele tem o conceito de <strong>módulos</strong>. Módulos são usados pra organizar <em>funções</em>, <em>tipos</em> e <em>valores</em> relacionados.</p>
+
+<p>Módulos são diferentes de <strong>namespaces</strong>, que também existem em C#, porquê esses não suportam funçoes nem valores, só declaracão de tipos ou <strong>módulos</strong>. Um módulo funciona mais ou menos como uma classe estática, onde tudo que é declarado vira uma propriedade pública.</p>
+
+<p>Os <strong>DTOs</strong> declarados nesse módulo são <em>records</em>. Em F# records diferem de classes por:</p>
+<ul>
+  <li>Imutáveis por padrão, uma vez criados não podem ser mudados</li>
+  <li>Tem igualdade estrutural, dois <em>record</em> são iguais se todas as propriedades forem iguais</li>
+  <li>Pode ser usados em <em>pattern matching</em> pra desmembrar e comparar todos os seus campos</li>
+</ul>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nc">Model</span> <span class="p">=</span>
+    <span class="c1">// F# é compatível com C#, então podemos usar o pacote</span>
+    <span class="c1">// System.Text.JSON padrão do Dotnet pra serialização</span>
+    <span class="k">let</span> <span class="n">options</span> <span class="p">=</span> <span class="nc">JsonSerializerOptions</span><span class="bp">()</span>
+    <span class="c1">// Configuração da serialização em JSON pra usar `snake_case`</span>
+    <span class="c1">// esse objeto `options` vai ser usado lá na frente pelos</span>
+    <span class="c1">// controllers</span>
+    <span class="n">options</span><span class="p">.</span><span class="nc">PropertyNamingPolicy</span> <span class="p">&lt;-</span> <span class="nn">JsonNamingPolicy</span><span class="p">.</span><span class="nc">SnakeCaseLower</span>
+    
+    <span class="c1">// View object pra receber as requisições de débito/crédito</span>
+    <span class="k">type</span> <span class="nc">TransacaoRequest</span> <span class="p">=</span>
+        <span class="p">{</span> <span class="n">valor</span><span class="p">:</span> <span class="kt">int</span>
+          <span class="n">tipo</span><span class="p">:</span> <span class="kt">string</span>
+          <span class="n">descricao</span><span class="p">:</span> <span class="kt">string</span> <span class="p">}</span>
+
+    <span class="c1">// Resposta pra uma transação de débito/crédito</span>
+    <span class="k">type</span> <span class="nc">TransacaoResponse</span> <span class="p">=</span> <span class="p">{</span> <span class="n">limite</span><span class="p">:</span> <span class="kt">int</span><span class="p">;</span> <span class="n">saldo</span><span class="p">:</span> <span class="kt">int</span> <span class="p">}</span>
+
+    <span class="c1">// Os tipos list, array, map, option e outros podem ser</span>
+    <span class="c1">// declarados como &lt;Tipo do Item&gt; list</span>
+    <span class="k">type</span> <span class="nc">ExtratoResponse</span> <span class="p">=</span>
+        <span class="p">{</span> <span class="n">saldo</span><span class="p">:</span> <span class="nc">ExtratoSaldoResponse</span>
+          <span class="n">ultimasTransacoes</span><span class="p">:</span> <span class="nc">ExtratoTransacaoResponse</span> <span class="kt">list</span> <span class="p">}</span>
+
+    <span class="c1">// Em F# você precisa declarar os tipos antes de poder</span>
+    <span class="c1">// referenciar eles. Mas você pode usar `and` pra</span>
+    <span class="c1">// encadear as declarações e ajudar um pouco na hora</span>
+    <span class="c1">// de ler o código.       </span>
+    <span class="k">and</span> <span class="nc">ExtratoSaldoResponse</span> <span class="p">=</span>
+        <span class="p">{</span> <span class="n">limite</span><span class="p">:</span> <span class="kt">int</span>
+          <span class="n">total</span><span class="p">:</span> <span class="kt">int</span>
+          <span class="n">dataExtrato</span><span class="p">:</span> <span class="nc">DateTime</span> <span class="p">}</span>
+    <span class="k">and</span> <span class="nc">ExtratoTransacaoResponse</span> <span class="p">=</span>
+        <span class="p">{</span> <span class="n">valor</span><span class="p">:</span> <span class="kt">int</span>
+          <span class="n">tipo</span><span class="p">:</span> <span class="kt">string</span>
+          <span class="n">descricao</span><span class="p">:</span> <span class="kt">string</span>
+          <span class="n">realizadaEm</span><span class="p">:</span> <span class="nc">DateTime</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="persistência">Persistência</h3>
+
+<p>Eu estou usando <a href="https://www.postgresql.org/">PostgreSQL</a> como banco de dados, e um wrapper F# para <a href="https://learn.microsoft.com/en-Us/dotnet/framework/data/adonet/">ADO.Net</a> chamado <a href="https://github.com/pimbrouwers/Donald">Donald</a> que oferece uma API funcional em cima da API normal em C#.</p>
+
+<p>A primeira coisa é declarar um novo módulo <code class="language-plaintext highlighter-rouge">Persistence</code>, e declarar algumas funções que vão receber um <code class="language-plaintext highlighter-rouge">IDataReader</code>, que é um helper pra ler os dados do <code class="language-plaintext highlighter-rouge">resultset</code> que vem do banco e retornar um dos DTOs declarados em <code class="language-plaintext highlighter-rouge">Model</code>.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nc">Persistence</span> <span class="p">=</span>
+    <span class="k">open</span> <span class="nc">Donald</span>
+    <span class="k">open</span> <span class="nc">Model</span> <span class="c1">// Modulo onde declaramos os DTOs</span>
+    
+    <span class="k">let</span> <span class="n">transacaoResposneDataReader</span> <span class="p">(</span><span class="n">rd</span><span class="p">:</span> <span class="nc">IDataReader</span><span class="p">)</span> <span class="p">:</span> <span class="nc">TransacaoResponse</span> <span class="p">=</span>
+         <span class="p">{</span> <span class="n">saldo</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadInt32</span> <span class="s2">"amount"</span> 
+           <span class="n">limite</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadInt32</span> <span class="s2">"overdraft_limit"</span> <span class="p">}</span>
+    <span class="k">let</span> <span class="n">balanceDataReader</span> <span class="p">(</span><span class="n">rd</span><span class="p">:</span> <span class="nc">IDataReader</span><span class="p">)</span> <span class="p">:</span> <span class="nc">ExtratoSaldoResponse</span> <span class="p">=</span>
+        <span class="p">{</span> <span class="n">total</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadInt32</span> <span class="s2">"amount"</span>
+          <span class="n">limite</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadInt32</span> <span class="s2">"overdraft_limit"</span>
+          <span class="n">dataExtrato</span> <span class="p">=</span> <span class="nn">DateTime</span><span class="p">.</span><span class="nc">Now</span> <span class="p">}</span>
+    
+    <span class="c1">// Pattern Matching para mapear o tipo da transação que vem do banco</span>
+    <span class="c1">// como "DEPOSIT"/"WITHDRAWAL" e precisa ser retornada como "c"/"d" na API</span>
+    <span class="k">let</span> <span class="n">tipoMapper</span> <span class="p">=</span>
+        <span class="k">function</span>
+        <span class="p">|</span> <span class="s2">"DEPOSIT"</span> <span class="p">-&gt;</span> <span class="s2">"c"</span>
+        <span class="p">|</span> <span class="s2">"WITHDRAWAL"</span> <span class="p">-&gt;</span> <span class="s2">"d"</span>
+        <span class="p">|</span> <span class="p">_</span> <span class="p">-&gt;</span> <span class="s2">"?"</span>
+
+    <span class="k">let</span> <span class="n">transactionDataReader</span> <span class="p">(</span><span class="n">rd</span><span class="p">:</span> <span class="nc">IDataReader</span><span class="p">)</span> <span class="p">:</span> <span class="nc">ExtratoTransacaoResponse</span> <span class="p">=</span>
+        <span class="p">{</span> <span class="n">valor</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadInt32</span> <span class="s2">"amount"</span>
+          <span class="n">tipo</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadString</span> <span class="s2">"transaction_type"</span> <span class="p">|&gt;</span> <span class="n">tipoMapper</span>
+          <span class="n">descricao</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadString</span> <span class="s2">"description"</span>
+          <span class="n">realizadaEm</span> <span class="p">=</span> <span class="n">rd</span><span class="p">.</span><span class="nc">ReadDateTime</span> <span class="s2">"transaction_date"</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>Agora eu declaro duas funções, <code class="language-plaintext highlighter-rouge">withdrawal</code> pra débitos e <code class="language-plaintext highlighter-rouge">deposit</code> pra créditos.</p>
+
+<p>Eu estou usando <code class="language-plaintext highlighter-rouge">Npgsql</code> como driver pra PostgreSQL, e o <code class="language-plaintext highlighter-rouge">Donald</code> tem um módulo <code class="language-plaintext highlighter-rouge">Db</code> que oferece uma API funcional pra criar comandos, setar parâmetros, e executar queries.</p>
+
+<p>Em F# você pode usar o <em>forward pipe</em> <code class="language-plaintext highlighter-rouge">|&gt;</code> pra passar o resultado de uma função como argumento pra outra, o que deixa o código mais legível.</p>
+
+<p>Um truque que eu usei aqui foi declarar mais de um statement SQL em cada query. Assim eu consigo fazer a transação de débito/crédito e já retornar o saldo atualizado em uma única chamada.</p>
+
+<p>A última chamada de cada função é pra <code class="language-plaintext highlighter-rouge">Db.Async.querySingle</code>, que é uma função que executa a query e retorna um único resultado. O <code class="language-plaintext highlighter-rouge">transacaoResposneDataReader</code> que eu declarei lá em cima é usado pra mapear o resultado do banco pra um dos DTOs.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">let</span> <span class="n">withdrawal</span> <span class="p">(</span><span class="n">dbconn</span><span class="p">:</span> <span class="nc">NpgsqlConnection</span><span class="p">)</span> <span class="p">(</span><span class="n">clientId</span><span class="p">:</span> <span class="kt">int</span><span class="p">,</span> <span class="n">amount</span><span class="p">:</span> <span class="kt">int</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="kt">string</span><span class="p">)</span> <span class="p">=</span>
+        <span class="k">let</span> <span class="n">sql</span> <span class="p">=</span>
+            <span class="s2">"CALL withdrawal(@clientId, @amount, @description);
+             SELECT amount, overdraft_limit FROM balance WHERE client_id = @clientId;"</span>
+        <span class="k">let</span> <span class="n">parameters</span> <span class="p">=</span>
+            <span class="p">[</span> <span class="s2">"@clientId"</span><span class="p">,</span> <span class="n">sqlInt32</span> <span class="n">clientId</span>
+              <span class="s2">"@amount"</span><span class="p">,</span> <span class="n">sqlInt32</span> <span class="n">amount</span>
+              <span class="s2">"@description"</span><span class="p">,</span> <span class="n">sqlString</span> <span class="n">description</span> <span class="p">]</span>
+        <span class="n">dbconn</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">newCommand</span> <span class="n">sql</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">setParams</span> <span class="n">parameters</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="nn">Async</span><span class="p">.</span><span class="n">querySingle</span> <span class="n">transacaoResposneDataReader</span>
+</code></pre></div></div>
+
+<p>O controle de concorrência é feito pelo PostgreSQL, a <code class="language-plaintext highlighter-rouge">STORED PROCEDURE</code> responsável pelo débito (<code class="language-plaintext highlighter-rouge">withdrawal</code>) cria uma transação e depende de uma <code class="language-plaintext highlighter-rouge">CONSTRAINT</code> do tipo <code class="language-plaintext highlighter-rouge">CHECK</code> pra garantir que o saldo não fique negativo.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">let</span> <span class="n">deposit</span> <span class="p">(</span><span class="n">dbconn</span><span class="p">:</span> <span class="nc">NpgsqlConnection</span><span class="p">)</span> <span class="p">(</span><span class="n">clientId</span><span class="p">:</span> <span class="kt">int</span><span class="p">,</span> <span class="n">amount</span><span class="p">:</span> <span class="kt">int</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="kt">string</span><span class="p">)</span> <span class="p">=</span>
+        <span class="k">let</span> <span class="n">sql</span> <span class="p">=</span>
+            <span class="s2">"CALL deposit(@clientId, @amount, @description);
+             SELECT amount, overdraft_limit FROM balance WHERE client_id = @clientId;"</span>
+        <span class="k">let</span> <span class="n">parameters</span> <span class="p">=</span>
+            <span class="p">[</span> <span class="s2">"@clientId"</span><span class="p">,</span> <span class="n">sqlInt32</span> <span class="n">clientId</span>
+              <span class="s2">"@amount"</span><span class="p">,</span> <span class="n">sqlInt32</span> <span class="n">amount</span>
+              <span class="s2">"@description"</span><span class="p">,</span> <span class="n">sqlString</span> <span class="n">description</span> <span class="p">]</span>
+        <span class="n">dbconn</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">newCommand</span> <span class="n">sql</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">setParams</span> <span class="n">parameters</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="nn">Async</span><span class="p">.</span><span class="n">querySingle</span> <span class="n">transacaoResposneDataReader</span>
+</code></pre></div></div>
+
+<p>Finalmente eu declaro duas funções para pegar o saldo e as últimas transações do cliente, que eu combino no <code class="language-plaintext highlighter-rouge">Controller</code> pra retornar o extrato.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">let</span> <span class="n">getBalance</span> <span class="p">(</span><span class="n">dbconn</span><span class="p">:</span> <span class="nc">NpgsqlConnection</span><span class="p">)</span> <span class="p">(</span><span class="n">clientId</span><span class="p">:</span> <span class="kt">int</span><span class="p">)</span> <span class="p">=</span>
+        <span class="k">let</span> <span class="n">sql</span> <span class="p">=</span> <span class="s2">"SELECT amount, overdraft_limit FROM balance WHERE client_id = @clientId"</span>
+        <span class="k">let</span> <span class="n">parameters</span> <span class="p">=</span> <span class="p">[</span> <span class="s2">"@clientId"</span><span class="p">,</span> <span class="n">sqlInt32</span> <span class="n">clientId</span> <span class="p">]</span>
+        <span class="n">dbconn</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">newCommand</span> <span class="n">sql</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">setParams</span> <span class="n">parameters</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="nn">Async</span><span class="p">.</span><span class="n">querySingle</span> <span class="n">balanceDataReader</span>
+
+    <span class="k">let</span> <span class="n">getTransactions</span> <span class="p">(</span><span class="n">dbconn</span><span class="p">:</span> <span class="nc">NpgsqlConnection</span><span class="p">)</span> <span class="p">(</span><span class="n">clientId</span><span class="p">:</span> <span class="kt">int</span><span class="p">)</span> <span class="p">=</span>
+        <span class="k">let</span> <span class="n">sql</span> <span class="p">=</span>
+            <span class="s2">"""
+            SELECT amount, transaction_type, description, transaction_date 
+            FROM transactions 
+            WHERE client_id = @clientId
+            ORDER BY transaction_date DESC LIMIT 10
+            """</span>
+        <span class="k">let</span> <span class="n">parameters</span> <span class="p">=</span> <span class="p">[</span> <span class="s2">"@clientId"</span><span class="p">,</span> <span class="n">sqlInt32</span> <span class="n">clientId</span> <span class="p">]</span>
+        <span class="n">dbconn</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">newCommand</span> <span class="n">sql</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="n">setParams</span> <span class="n">parameters</span>
+        <span class="p">|&gt;</span> <span class="nn">Db</span><span class="p">.</span><span class="nn">Async</span><span class="p">.</span><span class="n">query</span> <span class="n">transactionDataReader</span>
+</code></pre></div></div>
+
+<h3 id="controllers">Controllers</h3>
+
+<p>Pra implementar a API REST eu estou usando uma biblioteca chamada <a href="https://www.falcoframework.com/">Falco</a> que reutiliza componentes do <a href="https://learn.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0">ASP.NET Core</a> e oferece uma API funcional em F#.</p>
+
+<p>As duas primeiras funções que eu declaro utilizam dois tipos de <a href="https://en.wikipedia.org/wiki/Monad_(functional_programming)">monad</a>: <code class="language-plaintext highlighter-rouge">Option</code> e <code class="language-plaintext highlighter-rouge">Result</code>.</p>
+
+<p>A forma preferida de lidar com <code class="language-plaintext highlighter-rouge">Null</code> em F# é através do tipo <code class="language-plaintext highlighter-rouge">Option</code>, que pode ter dois valores: <code class="language-plaintext highlighter-rouge">Some &lt;T&gt;</code> e <code class="language-plaintext highlighter-rouge">None</code>.</p>
+
+<p>E <code class="language-plaintext highlighter-rouge">Result</code> é utilizado pra representar o resultado de alguma operação, também tendo dois valores: <code class="language-plaintext highlighter-rouge">Ok &lt;T&gt;</code> e <code class="language-plaintext highlighter-rouge">Error &lt;Exception&gt;</code>.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nc">Controller</span> <span class="p">=</span>
+    <span class="k">open</span> <span class="nc">Model</span>
+    
+    <span class="k">let</span> <span class="n">optionToResponse</span> <span class="p">(</span><span class="n">res</span><span class="p">:</span> <span class="k">'</span><span class="n">a</span> <span class="n">option</span><span class="p">)</span> <span class="p">=</span>
+        <span class="k">match</span> <span class="n">res</span> <span class="k">with</span>
+        <span class="p">|</span> <span class="nc">Some</span> <span class="n">x</span> <span class="p">-&gt;</span> <span class="nn">Response</span><span class="p">.</span><span class="n">ofJsonOptions</span> <span class="n">options</span> <span class="n">x</span>
+        <span class="p">|</span> <span class="nc">None</span> <span class="p">-&gt;</span> <span class="nn">Response</span><span class="p">.</span><span class="n">withStatusCode</span> <span class="mi">404</span> <span class="o">&gt;&gt;</span> <span class="nn">Response</span><span class="p">.</span><span class="n">ofEmpty</span>
+
+    <span class="k">let</span> <span class="n">deserialize</span> <span class="n">ctx</span> <span class="p">=</span> <span class="n">task</span> <span class="p">{</span>
+        <span class="k">try</span>
+            <span class="k">let</span><span class="o">!</span> <span class="n">obj</span> <span class="p">=</span> <span class="nn">Request</span><span class="p">.</span><span class="n">getJsonOptions</span> <span class="n">options</span> <span class="n">ctx</span>
+            <span class="k">return</span> <span class="nc">Ok</span> <span class="n">obj</span>
+        <span class="k">with</span> <span class="n">ex</span> <span class="p">-&gt;</span>
+            <span class="k">return</span> <span class="nc">Error</span> <span class="n">ex</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Services.inject</code> é uma função do <code class="language-plaintext highlighter-rouge">Falco</code> que apresenta a funcionalidade de <em>dependency injection</em> do ASP.NET Core de forma funcional.</p>
+
+<p>No caso abaixo, <code class="language-plaintext highlighter-rouge">Services.inject&lt;NpsqlConnection&gt;</code> recebe como parâmetro uma função, cujo parâmetro <code class="language-plaintext highlighter-rouge">dbconn</code> é injetado com uma instância da conexão com o banco de dados.</p>
+
+<p>A sintaxe <code class="language-plaintext highlighter-rouge">fun parametros -&gt; ...</code> é como você declara um <code class="language-plaintext highlighter-rouge">lambda</code>, ou função anônima, em F#.</p>
+
+<p>O bloco <code class="language-plaintext highlighter-rouge">task { ... }</code> é uma <code class="language-plaintext highlighter-rouge">computational expression</code>, que é uma feature do F#. Expressões computacionais oferecem uma forma de abstrair detalhes de uma computação para que você possa se concentrar na lógica.</p>
+
+<p>Nesse caso a expressão <code class="language-plaintext highlighter-rouge">task { ... }</code> retorna um <code class="language-plaintext highlighter-rouge">System.Threading.Task</code> do Dotnet. É a versão do F# do <code class="language-plaintext highlighter-rouge">async/await</code> do C#, sendo que o F# implementou esse conceito primeiro.</p>
+
+<p>Tem uma série de tutoriais muito bons que explica o funcionamento de expressões computacionais no site <a href="https://fsharpforfunandprofit.com/series/computation-expressions/">F# For fun and profit</a>.</p>
+
+<p>Abaixo a função que retorna o extrato:</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">let</span> <span class="n">balance</span> <span class="p">=</span>
+        <span class="nn">Services</span><span class="p">.</span><span class="n">inject</span><span class="p">&lt;</span><span class="nc">NpgsqlConnection</span><span class="p">&gt;</span> <span class="p">(</span><span class="k">fun</span> <span class="n">dbconn</span> <span class="p">-&gt;</span>
+            <span class="k">fun</span> <span class="n">ctx</span> <span class="p">-&gt;</span>
+            <span class="c1">// "task" é como se lida com async em F#</span>
+                <span class="n">task</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">clientId</span> <span class="p">=</span> <span class="p">(</span><span class="nn">Request</span><span class="p">.</span><span class="n">getRoute</span> <span class="n">ctx</span><span class="o">).</span><span class="nc">GetInt</span> <span class="s2">"id"</span> <span class="p">|&gt;</span> <span class="kt">int</span>
+            <span class="c1">// "let!" bloqueia até que o valor esteja disponível</span>
+                    <span class="k">let</span><span class="o">!</span> <span class="n">mayBeSaldo</span> <span class="p">=</span> <span class="nn">Persistence</span><span class="p">.</span><span class="n">getBalance</span> <span class="n">dbconn</span> <span class="n">clientId</span>
+                    <span class="k">let</span><span class="o">!</span> <span class="n">transacoes</span> <span class="p">=</span> <span class="nn">Persistence</span><span class="p">.</span><span class="n">getTransactions</span> <span class="n">dbconn</span> <span class="n">clientId</span>
+                    <span class="k">return</span>
+                        <span class="n">mayBeSaldo</span>
+                        <span class="p">|&gt;</span> <span class="nn">Option</span><span class="p">.</span><span class="n">map</span> <span class="p">(</span><span class="k">fun</span> <span class="n">saldo</span> <span class="p">-&gt;</span>
+                            <span class="p">{</span> <span class="n">saldo</span> <span class="p">=</span> <span class="n">saldo</span>
+                              <span class="n">ultimasTransacoes</span> <span class="p">=</span> <span class="n">transacoes</span> <span class="o">})</span>
+                        <span class="p">|&gt;</span> <span class="n">optionToResponse</span> <span class="p">&lt;|</span> <span class="n">ctx</span>
+                <span class="o">})</span>
+</code></pre></div></div>
+<p>E aqui é a função que faz as transações, que é a mais complexa. Ela faz a validação do payload, e chama a função de débito ou crédito dependendo do tipo da transação.</p>
+
+<p>Uma coisa que provavélmente eu deveria melhorar aqui é que eu dependo da exceção pra retornar um erro <code class="language-plaintext highlighter-rouge">422</code> caso a transação estoure o limite do cliente. Essa exceção vem lá do PostgreSQL na minha <em>STORED PROCEDURE</em>, e existem formas de tratar o erro no próprio SQL e retornar um erro mais amigável.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">let</span> <span class="n">transaction</span> <span class="p">=</span>
+        <span class="nn">Services</span><span class="p">.</span><span class="n">inject</span><span class="p">&lt;</span><span class="nc">NpgsqlConnection</span><span class="p">&gt;</span> <span class="p">(</span><span class="k">fun</span> <span class="n">dbconn</span> <span class="p">-&gt;</span>
+            <span class="k">fun</span> <span class="n">ctx</span> <span class="p">-&gt;</span>
+                <span class="n">task</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">clientId</span> <span class="p">=</span> <span class="p">(</span><span class="nn">Request</span><span class="p">.</span><span class="n">getRoute</span> <span class="n">ctx</span><span class="o">).</span><span class="nc">GetInt</span> <span class="s2">"id"</span>
+                    <span class="k">let</span><span class="o">!</span> <span class="n">request</span> <span class="p">=</span> <span class="n">deserialize</span> <span class="n">ctx</span>
+                    <span class="k">match</span> <span class="n">request</span> <span class="k">with</span>
+                    <span class="p">|</span> <span class="nc">Error</span> <span class="p">_</span> <span class="p">-&gt;</span> <span class="k">return</span> <span class="p">(</span><span class="nn">Response</span><span class="p">.</span><span class="n">withStatusCode</span> <span class="mi">422</span> <span class="o">&gt;&gt;</span> <span class="nn">Response</span><span class="p">.</span><span class="n">ofPlainText</span> <span class="s2">"Bad Request"</span><span class="p">)</span> <span class="n">ctx</span>
+                    <span class="p">|</span> <span class="nc">Ok</span> <span class="n">request</span> <span class="p">-&gt;</span>
+                    <span class="c1">// Outro ponto que eu poderia melhorar...</span>
+                    <span class="c1">// Tudo isso aqui poderia estar em uma função declarada lá em cima</span>
+                    <span class="c1">// no módulo Model... ¯\_(ツ)_/¯</span>
+                    <span class="k">if</span> <span class="n">request</span><span class="p">.</span><span class="n">valor</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">request</span><span class="p">.</span><span class="n">descricao</span> <span class="p">=</span> <span class="k">null</span> <span class="o">||</span> <span class="n">request</span><span class="p">.</span><span class="n">descricao</span><span class="p">.</span><span class="nc">Length</span> <span class="p">&gt;</span> <span class="mi">10</span> <span class="o">||</span> <span class="n">request</span><span class="p">.</span><span class="n">descricao</span><span class="p">.</span><span class="nc">Length</span> <span class="p">=</span> <span class="mi">0</span> <span class="k">then</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="nn">Response</span><span class="p">.</span><span class="n">withStatusCode</span> <span class="mi">422</span> <span class="o">&gt;&gt;</span> <span class="nn">Response</span><span class="p">.</span><span class="n">ofPlainText</span> <span class="s2">"Bad Request"</span><span class="p">)</span> <span class="n">ctx</span>
+                    <span class="k">else</span>
+                    <span class="c1">// GO HORSE PROGRAMMING</span>
+                    <span class="c1">// Aqui eu trato a exception que pode vir do banco caso</span>
+                    <span class="c1">// a constraint seja violada</span>
+                    <span class="k">try</span>
+                        <span class="k">let</span><span class="o">!</span> <span class="n">response</span> <span class="p">=</span>
+                        <span class="c1">// Pattern matching!</span>
+                            <span class="k">match</span> <span class="n">request</span><span class="p">.</span><span class="n">tipo</span> <span class="k">with</span>
+                            <span class="p">|</span> <span class="s2">"c"</span> <span class="p">-&gt;</span> <span class="nn">Persistence</span><span class="p">.</span><span class="n">deposit</span> <span class="n">dbconn</span> <span class="p">(</span><span class="n">clientId</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">valor</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">descricao</span><span class="p">)</span> <span class="c1">// Credito</span>
+                            <span class="p">|</span> <span class="s2">"d"</span> <span class="p">-&gt;</span> <span class="nn">Persistence</span><span class="p">.</span><span class="n">withdrawal</span> <span class="n">dbconn</span> <span class="p">(</span><span class="n">clientId</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">valor</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">descricao</span><span class="p">)</span> <span class="c1">// Debito</span>
+                            <span class="p">|</span> <span class="p">_</span> <span class="p">-&gt;</span> <span class="n">failwith</span> <span class="s2">"Invalid transaction type"</span>
+                        <span class="k">return</span> <span class="n">response</span> <span class="p">|&gt;</span> <span class="n">optionToResponse</span> <span class="p">&lt;|</span> <span class="n">ctx</span>
+                    <span class="k">with</span> <span class="p">_</span> <span class="p">-&gt;</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="nn">Response</span><span class="p">.</span><span class="n">withStatusCode</span> <span class="mi">422</span> <span class="o">&gt;&gt;</span> <span class="nn">Response</span><span class="p">.</span><span class="n">ofEmpty</span><span class="p">)</span> <span class="n">ctx</span>
+                <span class="o">})</span>
+</code></pre></div></div>
+
+<h3 id="routing">Routing</h3>
+
+<p>Finalmente o ponto de entrada do programa. Aqui o <code class="language-plaintext highlighter-rouge">Falco</code> oferece uma API funcional pra configurar o servidor.</p>
+
+<div class="language-fsharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// "EntryPoint" diz ao compilador que essa função é o ponto de entrada do aplicativo</span>
+<span class="p">[&lt;</span><span class="nc">EntryPoint</span><span class="p">&gt;]</span>
+<span class="k">let</span> <span class="n">main</span> <span class="n">args</span> <span class="p">=</span> <span class="c1">// Função "main" semelhante a C/C++/C#/Java</span>
+    <span class="k">let</span> <span class="n">env</span> <span class="p">=</span> <span class="nn">Environment</span><span class="p">.</span><span class="nc">GetEnvironmentVariable</span> <span class="s2">"ASPNETCORE_ENVIRONMENT"</span>
+    <span class="k">let</span> <span class="n">config</span> <span class="p">=</span> <span class="n">configuration</span> <span class="o">[||]</span> <span class="p">{</span>
+        <span class="n">required_json</span> <span class="s2">"appsettings.json"</span>
+        <span class="n">optional_json</span> <span class="o">$</span><span class="s2">"appsettings.{env}.json"</span>
+    <span class="p">}</span>
+    <span class="n">webHost</span> <span class="n">args</span> <span class="p">{</span>
+        <span class="c1">// Configura a injeção de dependência, adicionando a conexão com o banco</span>
+        <span class="n">add_service</span> <span class="o">(_.</span><span class="nc">AddNpgsqlDataSource</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="nc">GetConnectionString</span><span class="p">(</span><span class="s2">"Default"</span><span class="o">)))</span>
+
+        <span class="c1">// Configura os endpoints</span>
+        <span class="c1">// Controller.transaction e Controller.balance foram declaradas no modulo</span>
+        <span class="c1">// Controller lá em cima</span>
+        <span class="n">endpoints</span>
+            <span class="p">[</span> <span class="n">post</span> <span class="s2">"/clientes/{id}/transacoes"</span> <span class="nn">Controller</span><span class="p">.</span><span class="n">transaction</span>
+              <span class="n">get</span> <span class="s2">"/clientes/{id}/extrato"</span> <span class="nn">Controller</span><span class="p">.</span><span class="n">balance</span> <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="mi">0</span> <span class="c1">// A função main precisa retornar um inteiro</span>
+</code></pre></div></div>
+<h1 id="testes">Testes</h1>
+
+<p>Abaixo os resultados do teste de carga. Eu acho que a performance está excelente pra um projeto onde eu coloquei muito pouco esforço em otimizar qualquer coisa.</p>
+
+<p><img src="/assets/rinha-2024-q1/gatling.png" alt="alt text" /></p>
+
+<p>Os resultados completos você pode ver <a href="/assets/rinha-2024-q1/gatling/index.html">aqui</a>.</p>
+
+<h1 id="conclusão">Conclusão</h1>
+
+<p>Se você chegou até aqui, muito obrigado! Espero que você tenha gostado de conhecer um pouco mais sobre F#. É minha linguagem de programação favorita, e a melhor linguagem da qual você nunca ouviu falar!</p>]]></content>
+        <author>
+            <name></name>
+        </author>
+        <category term="hacking"/>
+        <category term="fsharp"/>
+        <category term="portuguese"/>
+        <category term="fsharp"/>
+        <category term="dotnet"/>
+        <summary type="html">
+            <![CDATA[A Rinha de Backend é um evento organizado pelo Francisco Zanfrancheschi. As regras são simples, você precisa criar uma API rodando em docker compose, seguindo a arquitetura mínima pedida, e que sobreviva a um teste de carga previamente escrito.]]></summary>
+    </entry>
+    <entry>
+        <title type="html">Uma história sobre firewall piercing</title>
+        <link href="/hacking/story/2023/03/09/firewall-piercing-story.html" rel="alternate" type="text/html"
+              title="Uma história sobre firewall piercing"/>
+        <published>2023-03-09T00:00:00+00:00</published>
+        <updated>2023-03-09T00:00:00+00:00</updated>
+        <id>/hacking/story/2023/03/09/firewall-piercing-story</id>
+        <content type="html" xml:base="/hacking/story/2023/03/09/firewall-piercing-story.html"><![CDATA[<p><img src="/assets/20230306162208.png" alt="Screenshot" /></p>
+
+<p>Em 2010/2011, a empresa onde eu trabalhava enfrentou dificuldades para se acertar com um novo cliente em seus primeiros projetos. Uma das principais complicações foi o acesso limitado a máquinas para trabalhar. O cliente havia contratado uma equipe de 20 desenvolvedores, mas só disponibilizou uma única máquina via VPN para eles usarem.</p>
+
+<p>A solução para a entrega do código não era eficiente: acessar o desktop remoto compartilhando o disco local, copiar o código para a máquina remota e fazer o commit via CVS. E o pior, só uma pessoa por vez podia acessar o desktop remoto.</p>
+
+<p><img src="/assets/20230306161358.png" alt="Diagram" /></p>
+
+<p>Pedir para acessar o servidor de CVS via VPN estava fora de questão. Então, a solução encontrada foi compartilhar uma única conexão de rede entre várias máquinas. Existem diversas formas de fazer isso, mas a escolhida foi um proxy SOCKS, que é usado para fazer proxy de conexões TCP, suportando praticamente qualquer protocolo.</p>
+
+<p>Para que isso fosse possível, instalamos um proxy SOCKS na máquina com acesso à VPN. Porém, isso não era suficiente, pois essa VPN só permitia acesso via RDP. A única máquina que tinha acesso ao CVS era o desktop remoto, então era preciso compartilhar a conexão dele de alguma forma. Novamente, a solução foi usar um proxy SOCKS, mas dessa vez no desktop remoto.</p>
+
+<p>Mas como fazer isso? O Firewall iria bloquear qualquer conexão que não fosse RDP, ou pelo menos era o que pensamos. Usando nmap, descobrimos que o firewall não bloqueava conexões na porta 53, que é a porta usada pelo serviço DNS. Então, instalamos outro servidor SOCKS no desktop remoto na porta 53 e assim conseguimos que todo mundo pudesse acessar o repositório CVS do cliente.</p>
+
+<p><img src="/assets/20230306162326.png" alt="Diagram" /></p>
+
+<p>Um último detalhe é que o proxy SOCKS escolhido foi o JSOCKS. Ele é um proxy SOCKS escrito em Java, o que é perfeito já que não tinhamos permissão de instalar nada na máquina remota, mas ela estava configurada para desenvolvimento Java.</p>]]></content>
+        <author>
+            <name></name>
+        </author>
+        <category term="hacking"/>
+        <category term="story"/>
+        <category term="portuguese"/>
+        <summary type="html"><![CDATA[]]></summary>
+    </entry>
+    <entry>
+        <title type="html">My old stuff!</title>
+        <link href="/tbt/2023/01/19/old-stuff.html" rel="alternate" type="text/html" title="My old stuff!"/>
+        <published>2023-01-19T09:45:47+00:00</published>
+        <updated>2023-01-19T09:45:47+00:00</updated>
+        <id>/tbt/2023/01/19/old-stuff</id>
+        <content type="html" xml:base="/tbt/2023/01/19/old-stuff.html"><![CDATA[<p><img src="/assets/old-stuff.jpeg" alt="Old Stuff" /></p>
+
+<h1 id="old-blog">Old blog</h1>
+
+<p>Believe or not <a href="http://victorhogemann.blogspot.com/">Blogger</a> still exists, and I actually wrote a bunch of stuff there.</p>
+
+<h1 id="medium">Medium</h1>
+
+<p>I also have a <a href="https://medium.com/@vhogemann">Medium</a> account, and wrote a couple of articles there.</p>
+
+<p>There’s one about <a href="https://medium.com/@vhogemann/using-database-functions-in-jpa-criteria-projections-dacdbe99f56b">Using database functions in JPA Criteria projections</a>.</p>
+
+<p>And another about <a href="https://medium.com/@vhogemann/testing-native-queries-with-functions-in-spring-boot-with-jpa-and-h2-7d379dced0ff">Testing Native Queries with Functions in Spring Boot with JPA and H2</a>.</p>]]></content>
+        <author>
+            <name></name>
+        </author>
+        <category term="tbt"/>
+        <summary type="html"><![CDATA[]]></summary>
+    </entry>
+</feed>

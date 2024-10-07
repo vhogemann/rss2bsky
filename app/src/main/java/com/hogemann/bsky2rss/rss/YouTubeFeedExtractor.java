@@ -1,8 +1,10 @@
 package com.hogemann.bsky2rss.rss;
 
 import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndLink;
 import org.jdom2.Element;
+
+import static com.hogemann.bsky2rss.rss.VanillaFeedExtractor.getLink;
+import static com.hogemann.bsky2rss.rss.VanillaFeedExtractor.getTitle;
 
 public class YouTubeFeedExtractor {
 
@@ -11,26 +13,6 @@ public class YouTubeFeedExtractor {
         final String link = getLink(entry);
         final String description = getDescription(entry);
         return new FeedItem(title, description, link);
-    }
-    private static String getLink(SyndEntry entry) {
-        String link = entry.getLink();
-        if(link == null && entry.getLinks() != null && !entry.getLinks().isEmpty()) {
-            link = entry
-                    .getLinks()
-                    .stream()
-                    .findFirst()
-                    .map(SyndLink::getHref)
-                    .orElse(null);
-        }
-        return link;
-    }
-
-    private static String getTitle(SyndEntry entry) {
-        String title = entry.getTitle();
-        if(title == null && entry.getTitleEx() != null) {
-            title = entry.getTitleEx().getValue();
-        }
-        return title;
     }
 
     private static String getDescription(SyndEntry entry) {
