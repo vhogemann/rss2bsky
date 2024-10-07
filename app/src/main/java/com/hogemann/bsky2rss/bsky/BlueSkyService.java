@@ -12,12 +12,19 @@ import com.hogemann.bsky2rss.bsky.model.embed.External;
 import com.hogemann.bsky2rss.bsky.model.record.CreateRecordRequest;
 import com.hogemann.bsky2rss.bsky.model.record.Post;
 import okhttp3.*;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
+import java.net.URI;
 
 public class BlueSkyService {
+
+    private static final int IMAGE_MAX_SIZE_BYTES = 1024 * 1024;
+    private static final int IMAGE_MAX_WIDTH = 1024;
+    private static final int IMAGE_MAX_HEIGHT = 1024;
+
     private final String baseUrl;
     private final OkHttpClient client;
     private final ObjectMapper mapper;
@@ -80,6 +87,12 @@ public class BlueSkyService {
                 .flatMap(cardInfo ->
                         downloadImage(cardInfo.thumb)
                                 .flatMap(image ->
+                                        ImageService.resize(
+                                                image,
+                                                IMAGE_MAX_WIDTH,
+                                                IMAGE_MAX_HEIGHT,
+                                                IMAGE_MAX_SIZE_BYTES))
+                                .flatMap(image ->
                                         uploadBlob(token, image)
                                                 .flatMap(blob -> {
                                                     External external = External.of(uri, cardInfo.title, cardInfo.description, blob.blob());
@@ -134,11 +147,11 @@ public class BlueSkyService {
                 var thumbElement = doc.selectFirst("meta[property=og:image]");
                 String thumb = null;
                 if (thumbElement != null) {
-                    thumb = thumbElement.attr("content");
+                    thumb = toAbsoluteUrl(url, thumbElement.attr("content"));
                 } else {
                     var twitterImageElement = doc.selectFirst("meta[name=twitter:image]");
                     if (twitterImageElement != null) {
-                        thumb = twitterImageElement.attr("content");
+                        thumb = toAbsoluteUrl(url, twitterImageElement.attr("content"));
                     }
                 }
                 return Result.ok(new CardInfo(title, description, thumb));
@@ -148,6 +161,21 @@ public class BlueSkyService {
         } catch (IOException e) {
             return Result.error(e);
         }
+    }
+
+    private String toAbsoluteUrl(@NonNull String baseUrl, @NonNull String itemUrl) {
+        if(itemUrl.contains("://")) {
+            return itemUrl;
+        }
+        final URI feedUri = URI.create(baseUrl);
+        return
+                feedUri.getScheme() +
+                        "://" +
+                        feedUri.getHost() +
+                        (feedUri.getPort() > 0 ? ":" + feedUri.getPort() : "") +
+                        (itemUrl.startsWith("/")
+                                ? itemUrl
+                                : "/" + itemUrl);
     }
 
     private static <T> Result<T> execute(
