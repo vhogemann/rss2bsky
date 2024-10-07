@@ -25,6 +25,14 @@ class JsonFileRepositoryTest {
              "feedExtractor": "YOUTUBE",
              "bskyIdentity": "example.identity.com",
              "bskyPassword": "example-app-password"
+        },
+        {
+             "feedId": "test_feed2",
+             "name": "Example Feed2",
+             "rssUrl": "https://example/rss",
+             "feedExtractor": "VANILLA",
+             "bskyIdentity": "example.identity.com",
+             "bskyPassword": "example-app-password"
         }]
         """;
 
@@ -53,7 +61,7 @@ class JsonFileRepositoryTest {
     @Test
     void listSources() {
         final List<Source> sources = repository.listSources();
-        assertEquals(1, sources.size());
+        assertEquals(2, sources.size());
         final Source source = sources.getFirst();
         assertEquals("test_feed", source.feedId());
         assertEquals("Example Feed", source.name());
