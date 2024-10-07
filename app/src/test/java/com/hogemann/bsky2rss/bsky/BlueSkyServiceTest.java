@@ -14,10 +14,12 @@ import com.hogemann.bsky2rss.bsky.model.record.Post;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okio.Buffer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -111,7 +113,7 @@ class BlueSkyServiceTest {
                         .setBody(BLOB_UPLOAD_RESPONSE)
                         .addHeader("Content-Type", "application/json")
         );
-        Result<UploadBlobResponse> blob = service.uploadBlob("token", new byte[0]);
+        Result<UploadBlobResponse> blob = service.uploadBlob("token", getThumbImage());
         assertTrue(blob.isOk());
     }
 
@@ -128,7 +130,8 @@ class BlueSkyServiceTest {
         // Download thumb image
         server.enqueue(
                 new MockResponse()
-                        .setBody("")
+                        // Create a buffer to store the image
+                        .setBody(new Buffer().write(getThumbImage()))
                         .addHeader("Content-Type", "image/png")
         );
 
@@ -166,5 +169,15 @@ class BlueSkyServiceTest {
                     </head>
                 </html>
                 """.formatted(server.url("/thumb.png").toString());
+    }
+
+    private byte[] getThumbImage() {
+        // reads from the root classpath on resouces/duke.png
+        try(InputStream is = BlueSkyServiceTest.class.getClassLoader().getResourceAsStream("duke.png")){
+            assert is != null;
+            return is.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
