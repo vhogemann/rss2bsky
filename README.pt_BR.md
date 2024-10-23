@@ -57,7 +57,7 @@ Um extrator define como os itens do feed são manipulados e os campos que serão
 do BlueSky e os links incorporados. Atualmente, os seguintes extratores estão disponíveis:
 
 - `YOUTUBE`: Extrai itens de feed do YouTube.
-- `VANILLA`: Extrai itens de feed com base em tags específicas.
+- `VANILLA`: Extrai itens de feed RSS genérico.
 
 #### Execução
 
