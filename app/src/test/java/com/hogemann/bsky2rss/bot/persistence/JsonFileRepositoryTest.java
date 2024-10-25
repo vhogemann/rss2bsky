@@ -60,7 +60,9 @@ class JsonFileRepositoryTest {
 
     @Test
     void listSources() {
-        final List<Source> sources = repository.listSources();
+        var sourcesResult = repository.listSources();
+        assert sourcesResult.isOk();
+        var sources = sourcesResult.get();
         assertEquals(2, sources.size());
         final Source source = sources.getFirst();
         assertEquals("test_feed", source.feedId());
@@ -75,7 +77,9 @@ class JsonFileRepositoryTest {
     void getLastLines() {
         final PublishedItem item = new PublishedItem("test_feed","https://example.com/item", "Example Item");
         repository.savePublishedItem("test_feed", item);
-        final List<PublishedItem> items = repository.lastPublishedItem("test_feed");
+        var itemsResult = repository.lastPublishedItem("test_feed");
+        assert itemsResult.isOk();
+        var items = itemsResult.get();
         assertEquals(item, items.getFirst());
     }
 
@@ -83,7 +87,9 @@ class JsonFileRepositoryTest {
     void lastPublishedItem() {
         final PublishedItem item = new PublishedItem("test_feed","https://example.com/item", "Example Item");
         repository.savePublishedItem("test_feed", item);
-        final List<PublishedItem> items = repository.lastPublishedItem("test_feed");
+        var itemsResult = repository.lastPublishedItem("test_feed");
+        assert itemsResult.isOk();
+        var items = itemsResult.get();
         assertEquals(item, items.getFirst());
     }
 
@@ -91,7 +97,9 @@ class JsonFileRepositoryTest {
     void savePublishedItem() {
         final PublishedItem item = new PublishedItem("test_feed","https://example.com/item", "Example Item");
         repository.savePublishedItem("test_feed", item);
-        final List<PublishedItem> items = repository.lastPublishedItem("test_feed");
+        var itemsResult = repository.lastPublishedItem("test_feed");
+        assert itemsResult.isOk();
+        var items = itemsResult.get();
         assertEquals(item, items.getFirst());
     }
 }

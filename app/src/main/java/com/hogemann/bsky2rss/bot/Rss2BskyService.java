@@ -28,26 +28,28 @@ public class Rss2BskyService {
     public void run() {
         repository
                 .listSources()
-                .forEach(this::publish);
+                .ifOkOrElse(
+                    sources -> sources.forEach(this::publish),
+                    error -> LOGGER.error("Failed to list sources", error)
+                );
     }
 
     private void publish(Source source) {
         LOGGER.info("Fetching feed for source {}", source.name());
-        final List<String> lastPublished =
-                repository
-                        .lastPublishedItem(source.feedId()).stream()
-                        .map(PublishedItem::url)
-                        .toList();
-        rssService
-                .fetch(source.rssUrl(), source.feedExtractor().getExtractor())
+        repository
+                .lastPublishedItem(source.feedId())
+                .map(items -> items.stream().map(PublishedItem::url).toList())
+                .flatMap(lastPublished ->
+                    rssService
+                        .fetch(source.rssUrl(), source.feedExtractor().getExtractor())
+                        .map(feed -> feed.stream()
+                                .filter(item -> !lastPublished.contains(item.link()))
+                                .toList()
+                        )
+                )
                 .ifOkOrElse(
-                        feed -> {
-                            List<FeedItem> items = feed.stream()
-                                    .filter(item -> !lastPublished.contains(item.link()))
-                                    .toList();
-                            publish(source, items);
-                        },
-                        error -> LOGGER.error("Failed to fetch feed", error)
+                    items -> publish(source, items),
+                    error -> LOGGER.error("Failed to list last published items", error)
                 );
     }
 
@@ -75,7 +77,6 @@ public class Rss2BskyService {
                         error -> LOGGER.error("Failed to login to BlueSky: ", error)
                 );
     }
-
     private void savePublishedItem(Source source, FeedItem item) {
         repository.savePublishedItem(source.feedId(), new PublishedItem(
                 source.feedId(),

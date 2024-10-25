@@ -1,6 +1,7 @@
 package com.hogemann.bsky2rss.bot.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hogemann.bsky2rss.Result;
 import com.hogemann.bsky2rss.bot.model.PublishedItem;
 import com.hogemann.bsky2rss.bot.model.Source;
 import org.slf4j.Logger;
@@ -13,7 +14,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class JsonFileRepository implements Rss2BskyRepository {
@@ -31,17 +35,18 @@ public class JsonFileRepository implements Rss2BskyRepository {
     }
 
     @Override
-    public List<Source> listSources() {
+    public Result<List<Source>> listSources() {
         final String fileName = path + "/" + SOURCES_FILE;
         final File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try {
-                return mapper.readValue(file, mapper.getTypeFactory().constructCollectionType(List.class, Source.class));
+                return Result.ok(mapper.readValue(file, mapper.getTypeFactory().constructCollectionType(List.class, Source.class)));
             } catch (IOException e) {
                 LOGGER.error("Error reading file {}", fileName, e);
+                return Result.error(e);
             }
         }
-        return List.of();
+        return Result.ok(List.of());
     }
 
     public static Stream<String> getLastLines(int lines, String filePath) throws IOException {
@@ -59,21 +64,23 @@ public class JsonFileRepository implements Rss2BskyRepository {
     }
 
     @Override
-    public List<PublishedItem> lastPublishedItem(String sourceId) {
+    public Result<List<PublishedItem>> lastPublishedItem(String sourceId) {
         final String fileName = path + "/" + sourceId + ".ndjson";
         final File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try {
-                return getLastLines(100, fileName)
+                var lastLines = getLastLines(100, fileName)
                         .map(this::parsePublishedItem)
                         .filter(Optional::isPresent)
                         .map(Optional::get)
                         .toList();
+                return Result.ok(lastLines);
             } catch (IOException e) {
                 LOGGER.error("Error reading file {}", fileName, e);
+                return Result.error(e);
             }
         }
-        return List.of();
+        return Result.ok(List.of());
     }
 
     private Optional<PublishedItem> parsePublishedItem(String json) {
