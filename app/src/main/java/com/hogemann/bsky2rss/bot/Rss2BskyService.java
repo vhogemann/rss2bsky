@@ -67,7 +67,8 @@ public class Rss2BskyService {
                                         auth.accessJwt(),
                                         auth.did(),
                                         item.title(),
-                                        item.link())
+                                        item.link(),
+                                        item.thumbnail().orElse(null))
                                     .ifOkOrElse(
                                             response -> savePublishedItem(source, item),
                                             error -> LOGGER.error("Failed to publish item: ", error)

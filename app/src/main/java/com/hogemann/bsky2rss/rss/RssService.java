@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class RssService {
@@ -32,13 +33,6 @@ public class RssService {
                         final List<FeedItem> items =
                                 feed.getEntries().stream()
                                         .map(extractor)
-                                        .map(item ->
-                                                new FeedItem(
-                                                        item.title(),
-                                                        item.description(),
-                                                        toAbsoluteUrl(url,item.link())
-                                                )
-                                        )
                                         .toList();
                         return Result.ok(items);
                     } catch (FeedException | IOException e) {

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,12 +37,13 @@ public class RssServiceTest {
         assertEquals(3, items.size());
 
         assertEquals(
-                items.getFirst(),
                 new FeedItem(
                         "Rinha de Backend 2024 - F#",
                         "A Rinha de Backend é um evento organizado pelo Francisco Zanfrancheschi. As regras são simples, você precisa criar uma API rodando em docker compose, seguindo a arquitetura mínima pedida, e que sobreviva a um teste de carga previamente escrito.",
-                        server.url("/hacking/fsharp/2024/02/25/rinha-de-backend-2024.html").toString()
-                        ));
+                        "/hacking/fsharp/2024/02/25/rinha-de-backend-2024.html",
+                        Optional.empty()
+                        ),
+                items.getFirst());
     }
 
     @Test
@@ -60,7 +62,8 @@ public class RssServiceTest {
                 new FeedItem(
                         "How do QR codes work? (I built one myself to find out)",
                         "Video Description",
-                        "https://www.youtube.com/watch?v=w5ebcowAJD8"
+                        "https://www.youtube.com/watch?v=w5ebcowAJD8",
+                        Optional.of("https://i4.ytimg.com/vi/w5ebcowAJD8/hqdefault.jpg")
                         ));
     }
 

@@ -3,12 +3,14 @@ package com.hogemann.bsky2rss.rss;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndLink;
 
+import java.util.Optional;
+
 public class VanillaFeedExtractor {
     public static FeedItem extract(SyndEntry entry) {
         final String title = getTitle(entry);
         final String link = getLink(entry);
         final String description = getDescription(entry);
-        return new FeedItem(title, description, link);
+        return new FeedItem(title, description, link, Optional.empty());
     }
 
     protected static String getLink(SyndEntry entry) {

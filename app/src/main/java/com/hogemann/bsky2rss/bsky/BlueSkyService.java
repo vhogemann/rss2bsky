@@ -18,6 +18,7 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 public class BlueSkyService {
 
@@ -82,26 +83,36 @@ public class BlueSkyService {
         );
     }
 
-    public Result<CreateRecordResponse> createPostWithLinkCard(String token, String did, String text, String uri) {
+    public Result<CreateRecordResponse> createPostWithLinkCard(String token, String did, String text, String uri, String thumbnail) {
         return downloadCardInfo(uri)
                 .flatMap(cardInfo ->
-                        downloadImage(cardInfo.thumb)
-                                .flatMap(image ->
-                                        ImageService.resize(
-                                                image,
-                                                IMAGE_MAX_WIDTH,
-                                                IMAGE_MAX_HEIGHT,
-                                                IMAGE_MAX_SIZE_BYTES))
-                                .flatMap(image ->
+                        downloadImage(thumbnail)
+                                .orElse(() ->
+                                        downloadImage(cardInfo.thumb)
+                                                .flatMap(image ->
+                                                        ImageService.resize(
+                                                                image,
+                                                                IMAGE_MAX_WIDTH,
+                                                                IMAGE_MAX_HEIGHT,
+                                                                IMAGE_MAX_SIZE_BYTES))
+                                ).flatMap(image ->
                                         uploadBlob(token, image)
                                                 .flatMap(blob -> {
-                                                    External external = External.of(uri, cardInfo.title, cardInfo.description, blob.blob());
-                                                    return createRecord(token, CreateRecordRequest.ofPost(
-                                                            did,
-                                                            Post.ofTextWithExternal("en", text, external)
+                                                    External external =
+                                                            External.of(
+                                                                    uri,
+                                                                    cardInfo.title,
+                                                                    cardInfo.description,
+                                                                    blob.blob());
+                                                    return createRecord(token,
+                                                            CreateRecordRequest.ofPost(
+                                                                did,
+                                                                Post.ofTextWithExternal(
+                                                                        "en",
+                                                                        text,
+                                                                        external)
                                                     ));
                                                 })
-
                                 ));
     }
 
@@ -164,7 +175,7 @@ public class BlueSkyService {
     }
 
     private String toAbsoluteUrl(@NonNull String baseUrl, @NonNull String itemUrl) {
-        if(itemUrl.contains("://")) {
+        if (itemUrl.contains("://")) {
             return itemUrl;
         }
         final URI feedUri = URI.create(baseUrl);
@@ -183,8 +194,8 @@ public class BlueSkyService {
             Request request,
             ObjectMapper mapper,
             Class<T> clazz) {
-        try(var response = client.newCall(request).execute()) {
-            if(response.isSuccessful() && response.body() != null) {
+        try (var response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
                 var body = response.body().string();
                 var result = mapper.readValue(body, clazz);
                 return Result.ok(result);
@@ -199,6 +210,7 @@ public class BlueSkyService {
         return Result.empty();
     }
 
-    private record CardInfo(String title, String description, String thumb) { }
+    private record CardInfo(String title, String description, String thumb) {
+    }
 
 }

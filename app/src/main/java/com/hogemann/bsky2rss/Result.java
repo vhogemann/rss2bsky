@@ -2,6 +2,7 @@ package com.hogemann.bsky2rss;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Result <V>{
 
@@ -46,6 +47,14 @@ public class Result <V>{
             return mapper.apply(value);
         } else {
             return error(error);
+        }
+    }
+
+    public Result<V> orElse(Supplier<Result<V>> supplier) {
+        if(isOk()) {
+            return this;
+        } else {
+            return supplier.get();
         }
     }
 

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -154,7 +155,8 @@ class BlueSkyServiceTest {
                         "token",
                         "did",
                         "Hello, World!",
-                        server.url("/").toString());
+                        server.url("/").toString(),
+                        null);
 
         assertTrue(record.isOk());
     }
