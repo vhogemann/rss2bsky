@@ -1,5 +1,6 @@
 package com.hogemann.bsky2rss.bot;
 
+import com.hogemann.bsky2rss.UrlUtil;
 import com.hogemann.bsky2rss.bot.model.PublishedItem;
 import com.hogemann.bsky2rss.bot.model.Source;
 import com.hogemann.bsky2rss.bot.persistence.Rss2BskyRepository;
@@ -67,7 +68,7 @@ public class Rss2BskyService {
                                         auth.accessJwt(),
                                         auth.did(),
                                         item.title(),
-                                        item.link(),
+                                        UrlUtil.toAbsoluteUrl(source.rssUrl(), item.link()),
                                         item.thumbnail().orElse(null))
                                     .ifOkOrElse(
                                             response -> savePublishedItem(source, item),

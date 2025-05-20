@@ -41,21 +41,6 @@ public class RssService {
                 });
     }
 
-    private String toAbsoluteUrl(@NonNull  String feedUrl, @NonNull String itemUrl) {
-        if(itemUrl.contains("://")) {
-            return itemUrl;
-        }
-        final URI feedUri = URI.create(feedUrl);
-        return
-                feedUri.getScheme() +
-                "://" +
-                feedUri.getHost() +
-                (feedUri.getPort() > 0 ? ":" + feedUri.getPort() : "") +
-                (itemUrl.startsWith("/")
-                        ? itemUrl
-                        : "/" + itemUrl);
-    }
-
     private Result<String> fetchFeed(String url) {
         final Request request = new Request.Builder().url(url).get().build();
         try(var result = client.newCall(request).execute()) {

@@ -22,6 +22,7 @@ public class VanillaFeedExtractor {
                     .findFirst()
                     .map(SyndLink::getHref)
                     .orElse(null);
+
         }
         return link;
     }

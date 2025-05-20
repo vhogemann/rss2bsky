@@ -3,6 +3,7 @@ package com.hogemann.bsky2rss.bsky;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hogemann.bsky2rss.Result;
+import com.hogemann.bsky2rss.UrlUtil;
 import com.hogemann.bsky2rss.bsky.model.AuthRequest;
 import com.hogemann.bsky2rss.bsky.model.AuthResponse;
 import com.hogemann.bsky2rss.bsky.model.record.CreateRecordResponse;
@@ -12,13 +13,10 @@ import com.hogemann.bsky2rss.bsky.model.embed.External;
 import com.hogemann.bsky2rss.bsky.model.record.CreateRecordRequest;
 import com.hogemann.bsky2rss.bsky.model.record.Post;
 import okhttp3.*;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
-import java.net.URI;
-import java.util.Optional;
 
 public class BlueSkyService {
 
@@ -158,11 +156,11 @@ public class BlueSkyService {
                 var thumbElement = doc.selectFirst("meta[property=og:image]");
                 String thumb = null;
                 if (thumbElement != null) {
-                    thumb = toAbsoluteUrl(url, thumbElement.attr("content"));
+                    thumb = UrlUtil.toAbsoluteUrl(url, thumbElement.attr("content"));
                 } else {
                     var twitterImageElement = doc.selectFirst("meta[name=twitter:image]");
                     if (twitterImageElement != null) {
-                        thumb = toAbsoluteUrl(url, twitterImageElement.attr("content"));
+                        thumb = UrlUtil.toAbsoluteUrl(url, twitterImageElement.attr("content"));
                     }
                 }
                 return Result.ok(new CardInfo(title, description, thumb));
@@ -172,21 +170,6 @@ public class BlueSkyService {
         } catch (IOException e) {
             return Result.error(e);
         }
-    }
-
-    private String toAbsoluteUrl(@NonNull String baseUrl, @NonNull String itemUrl) {
-        if (itemUrl.contains("://")) {
-            return itemUrl;
-        }
-        final URI feedUri = URI.create(baseUrl);
-        return
-                feedUri.getScheme() +
-                        "://" +
-                        feedUri.getHost() +
-                        (feedUri.getPort() > 0 ? ":" + feedUri.getPort() : "") +
-                        (itemUrl.startsWith("/")
-                                ? itemUrl
-                                : "/" + itemUrl);
     }
 
     private static <T> Result<T> execute(
